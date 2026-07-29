@@ -1,15 +1,26 @@
-import React from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider } from './features/auth/AuthProvider'
+import { LoginPage } from './features/auth/LoginPage'
+import { DashboardPage } from './features/dashboard/DashboardPage'
+import { ProtectedRoute } from './features/auth/ProtectedRoute'
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100">
-      <header className="p-6 border-b bg-white/50 dark:bg-slate-800/60">
-        <h1 className="text-2xl font-semibold">Athletes Tracker</h1>
-        <p className="text-sm text-slate-600 dark:text-slate-300">Prototype initial - Interface en français</p>
-      </header>
-      <main className="p-6">
-        <p>Bienvenue — connectez-vous pour continuer.</p>
-      </main>
-    </div>
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
   )
 }

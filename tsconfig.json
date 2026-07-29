@@ -11,9 +11,7 @@
     "isolatedModules": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true,
-    "baseUrl": "./",
-    "paths": {}
+    "resolveJsonModule": true
   },
   "include": ["src"]
 }
