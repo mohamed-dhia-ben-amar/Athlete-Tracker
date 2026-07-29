@@ -5,9 +5,9 @@ import type {
   CompetitionRecordUpdate
 } from '../types/competition'
 
-export async function fetchCompetitions() {
+export async function fetchCompetitions(): Promise<CompetitionRecord[]> {
   const { data, error } = await supabase
-    .from<CompetitionRecord>('competition_records')
+    .from('competition_records')
     .select('*')
     .order('competition_datetime', { ascending: false })
 
@@ -15,12 +15,12 @@ export async function fetchCompetitions() {
     throw error
   }
 
-  return data ?? []
+  return (data ?? []) as CompetitionRecord[]
 }
 
 export async function fetchCompetitionById(id: string) {
   const { data, error } = await supabase
-    .from<CompetitionRecord>('competition_records')
+    .from('competition_records')
     .select('*')
     .eq('id', id)
     .single()
@@ -34,7 +34,7 @@ export async function fetchCompetitionById(id: string) {
 
 export async function createCompetition(record: CompetitionRecordInsert) {
   const { data, error } = await supabase
-    .from<CompetitionRecord>('competition_records')
+    .from('competition_records')
     .insert(record)
     .select()
 
@@ -48,7 +48,7 @@ export async function createCompetition(record: CompetitionRecordInsert) {
 export async function updateCompetition(record: CompetitionRecordUpdate) {
   const { id, ...payload } = record
   const { data, error } = await supabase
-    .from<CompetitionRecord>('competition_records')
+    .from('competition_records')
     .update(payload)
     .eq('id', id)
     .select()
