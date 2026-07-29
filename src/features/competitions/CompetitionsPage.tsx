@@ -6,6 +6,8 @@ import { useAuth } from '../auth/useAuth'
 import { AppShell } from '../layout/AppShell'
 import { Modal } from '../../components/Modal'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { ToastContainer } from '../../components/Toast'
+import { Spinner } from '../../components/Spinner'
 import { exportCompetitionsToExcel, exportCompetitionsToPdf } from '../../lib/exportUtils'
 import { competitionSchema, type CompetitionFormValues } from './competitionSchema'
 import type { CompetitionRecord, CompetitionRecordInsert } from '../../types/competition'
@@ -108,11 +110,20 @@ export function CompetitionsPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedCompetition, setSelectedCompetition] = useState<CompetitionRecord | null>(null)
   const [deleteCandidate, setDeleteCandidate] = useState<CompetitionRecord | null>(null)
-  const [notification, setNotification] = useState<string | null>(null)
+  const [toasts, setToasts] = useState<Array<{ id: string; message: string; type?: 'success' | 'error' | 'info' }>>([])
   const [searchText, setSearchText] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [stageFilter, setStageFilter] = useState('')
   const [sportFilter, setSportFilter] = useState('')
+
+  const addToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    const id = Math.random().toString(36).substr(2, 9)
+    setToasts((prev) => [...prev, { id, message, type }])
+  }
+
+  const removeToast = (id: string) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id))
+  }
 
   const auth = useAuth()
   const { data = [], isLoading, isError } = useQuery(['competitions'], fetchCompetitions)
@@ -120,29 +131,29 @@ export function CompetitionsPage() {
   const createMutation = useMutation(createCompetition, {
     onSuccess: () => {
       queryClient.invalidateQueries(['competitions'])
-      setNotification('La compétition a été créée avec succès.')
+      addToast('La compétition a été créée avec succès.', 'success')
       setModalOpen(false)
     },
-    onError: () => setNotification('Impossible de créer la compétition.')
+    onError: () => addToast('Impossible de créer la compétition.', 'error')
   })
 
   const updateMutation = useMutation(updateCompetition, {
     onSuccess: () => {
       queryClient.invalidateQueries(['competitions'])
-      setNotification('La compétition a été mise à jour.')
+      addToast('La compétition a été mise à jour.', 'success')
       setModalOpen(false)
       setSelectedCompetition(null)
     },
-    onError: () => setNotification('Impossible de mettre à jour la compétition.')
+    onError: () => addToast('Impossible de mettre à jour la compétition.', 'error')
   })
 
   const deleteMutation = useMutation(deleteCompetition, {
     onSuccess: () => {
       queryClient.invalidateQueries(['competitions'])
-      setNotification('La compétition a été supprimée.')
+      addToast('La compétition a été supprimée.', 'success')
       setDeleteCandidate(null)
     },
-    onError: () => setNotification('Impossible de supprimer la compétition.')
+    onError: () => addToast('Impossible de supprimer la compétition.', 'error')
   })
 
   const {
@@ -202,7 +213,7 @@ export function CompetitionsPage() {
 
   const onSubmit = async (values: CompetitionFormValues) => {
     if (!auth.user?.id) {
-      setNotification('Impossible de récupérer l’utilisateur connecté.')
+      addToast("Impossible de récupérer l'utilisateur connecté.", 'error')
       return
     }
 
@@ -250,11 +261,7 @@ export function CompetitionsPage() {
         </div>
       </div>
 
-      {notification ? (
-        <div className="mb-4 rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
-          {notification}
-        </div>
-      ) : null}
+      <ToastContainer toasts={toasts} onClose={removeToast} />
 
       <div className="mb-6 grid gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:grid-cols-[1.5fr_1fr]">
         <div className="space-y-2">
@@ -457,9 +464,16 @@ export function CompetitionsPage() {
             <button
               type="submit"
               disabled={isSubmitting || createMutation.isLoading || updateMutation.isLoading}
-              className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-slate-200"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-slate-200"
             >
-              {isSubmitting || createMutation.isLoading || updateMutation.isLoading ? 'Enregistrement…' : actionLabel}
+              {isSubmitting || createMutation.isLoading || updateMutation.isLoading ? (
+                <>
+                  <Spinner size="sm" />
+                  Enregistrement…
+                </>
+              ) : (
+                actionLabel
+              )}
             </button>
           </div>
         </form>

@@ -9,6 +9,7 @@ import {
   type SortingState
 } from '@tanstack/react-table'
 import type { CompetitionRecord } from '../../types/competition'
+import { CompetitionTableSkeleton } from '../../components/Skeleton'
 
 interface CompetitionTableProps {
   records: CompetitionRecord[]
@@ -101,11 +102,7 @@ export function CompetitionTable({ records, isLoading, isError, onEdit, onDelete
   const pageCount = table.getPageCount()
 
   if (isLoading) {
-    return (
-      <div className="rounded-3xl border border-slate-200 bg-slate-50 p-8 text-center text-slate-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400">
-        Chargement des compétitions…
-      </div>
-    )
+    return <CompetitionTableSkeleton rows={5} />
   }
 
   if (isError) {
