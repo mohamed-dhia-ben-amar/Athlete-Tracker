@@ -6,6 +6,7 @@ import { useAuth } from '../auth/useAuth'
 import { AppShell } from '../layout/AppShell'
 import { Modal } from '../../components/Modal'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { exportCompetitionsToExcel, exportCompetitionsToPdf } from '../../lib/exportUtils'
 import { competitionSchema, type CompetitionFormValues } from './competitionSchema'
 import type { CompetitionRecord, CompetitionRecordInsert } from '../../types/competition'
 import {
@@ -224,13 +225,29 @@ export function CompetitionsPage() {
           <p className="text-sm uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Gestion</p>
           <h1 className="mt-2 text-3xl font-semibold text-slate-900 dark:text-slate-100">Compétitions</h1>
         </div>
-        <button
-          type="button"
-          onClick={openNewModal}
-          className="inline-flex items-center rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-slate-200"
-        >
-          Nouvelle compétition
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => exportCompetitionsToExcel(filteredCompetitions)}
+            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-900"
+          >
+            Exporter Excel
+          </button>
+          <button
+            type="button"
+            onClick={() => exportCompetitionsToPdf(filteredCompetitions)}
+            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-900"
+          >
+            Exporter PDF
+          </button>
+          <button
+            type="button"
+            onClick={openNewModal}
+            className="inline-flex items-center rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-slate-200"
+          >
+            Nouvelle compétition
+          </button>
+        </div>
       </div>
 
       {notification ? (
