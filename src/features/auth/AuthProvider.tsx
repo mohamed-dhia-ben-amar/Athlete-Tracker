@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false)
     })
 
-    const { subscription } = supabase.auth.onAuthStateChange((_event, sessionPayload) => {
+    const { data } = supabase.auth.onAuthStateChange((_event, sessionPayload) => {
       setSession(sessionPayload)
       setUser(sessionPayload?.user ?? null)
       setLoading(false)
@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       mounted = false
-      subscription.unsubscribe()
+      data.subscription.unsubscribe()
     }
   }, [])
 
