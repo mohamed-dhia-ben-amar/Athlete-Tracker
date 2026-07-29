@@ -14,37 +14,72 @@ interface CompetitionTableProps {
   records: CompetitionRecord[]
   isLoading: boolean
   isError: boolean
+  onEdit?: (record: CompetitionRecord) => void
+  onDelete?: (record: CompetitionRecord) => void
 }
 
 const pageSizes = [5, 10, 20]
 
-export function CompetitionTable({ records, isLoading, isError }: CompetitionTableProps) {
+export function CompetitionTable({ records, isLoading, isError, onEdit, onDelete }: CompetitionTableProps) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
 
   const columns = useMemo<ColumnDef<CompetitionRecord>[]>(
-    () => [
-      { header: 'Participant', accessorKey: 'participant_name' },
-      { header: 'Type', accessorKey: 'participant_type' },
-      { header: 'Sport', accessorKey: 'sport_type' },
-      { header: 'Discipline', accessorKey: 'discipline' },
-      { header: 'Compétition', accessorKey: 'competition_name' },
-      {
-        header: 'Date',
-        accessorKey: 'competition_datetime',
-        cell: (info) => new Date(info.getValue() as string).toLocaleDateString('fr-FR')
-      },
-      {
-        header: 'Heure',
-        accessorKey: 'competition_datetime',
-        cell: (info) => new Date(info.getValue() as string).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-      },
-      { header: 'Lieu', accessorKey: 'location' },
-      { header: 'Étape', accessorKey: 'stage' },
-      { header: 'Statut', accessorKey: 'status' },
-      { header: 'Résultat', accessorKey: 'result' }
-    ],
-    []
+    () => {
+      const baseColumns: ColumnDef<CompetitionRecord>[] = [
+        { header: 'Participant', accessorKey: 'participant_name' },
+        { header: 'Type', accessorKey: 'participant_type' },
+        { header: 'Sport', accessorKey: 'sport_type' },
+        { header: 'Discipline', accessorKey: 'discipline' },
+        { header: 'Compétition', accessorKey: 'competition_name' },
+        {
+          header: 'Date',
+          accessorKey: 'competition_datetime',
+          cell: (info) => new Date(info.getValue() as string).toLocaleDateString('fr-FR')
+        },
+        {
+          header: 'Heure',
+          accessorKey: 'competition_datetime',
+          cell: (info) => new Date(info.getValue() as string).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+        },
+        { header: 'Lieu', accessorKey: 'location' },
+        { header: 'Étape', accessorKey: 'stage' },
+        { header: 'Statut', accessorKey: 'status' },
+        { header: 'Résultat', accessorKey: 'result' }
+      ]
+
+      if (onEdit || onDelete) {
+        baseColumns.push({
+          id: 'actions',
+          header: 'Actions',
+          cell: ({ row }) => (
+            <div className="flex flex-wrap gap-2">
+              {onEdit ? (
+                <button
+                  type="button"
+                  onClick={() => onEdit(row.original)}
+                  className="rounded-2xl border border-slate-200 bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
+                >
+                  Éditer
+                </button>
+              ) : null}
+              {onDelete ? (
+                <button
+                  type="button"
+                  onClick={() => onDelete(row.original)}
+                  className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-100 dark:border-red-700 dark:bg-red-950 dark:text-red-200 dark:hover:bg-red-900"
+                >
+                  Supprimer
+                </button>
+              ) : null}
+            </div>
+          )
+        })
+      }
+
+      return baseColumns
+    },
+    [onDelete, onEdit]
   )
 
   const table = useReactTable({
