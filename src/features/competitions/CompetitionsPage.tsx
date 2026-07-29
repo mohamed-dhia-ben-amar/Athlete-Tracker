@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -108,6 +108,10 @@ export function CompetitionsPage() {
   const [selectedCompetition, setSelectedCompetition] = useState<CompetitionRecord | null>(null)
   const [deleteCandidate, setDeleteCandidate] = useState<CompetitionRecord | null>(null)
   const [notification, setNotification] = useState<string | null>(null)
+  const [searchText, setSearchText] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [stageFilter, setStageFilter] = useState('')
+  const [sportFilter, setSportFilter] = useState('')
 
   const auth = useAuth()
   const { data = [], isLoading, isError } = useQuery(['competitions'], fetchCompetitions)
@@ -160,6 +164,24 @@ export function CompetitionsPage() {
       setValue('discipline', disciplines[0])
     }
   }, [sportType])
+
+  const filteredCompetitions = useMemo(() => {
+    return data.filter((competition) => {
+      const search = searchText.trim().toLowerCase()
+      const matchesSearch =
+        !search ||
+        competition.participant_name.toLowerCase().includes(search) ||
+        competition.competition_name.toLowerCase().includes(search) ||
+        competition.discipline.toLowerCase().includes(search) ||
+        competition.location.toLowerCase().includes(search)
+
+      const matchesStatus = !statusFilter || competition.status === statusFilter
+      const matchesStage = !stageFilter || competition.stage === stageFilter
+      const matchesSport = !sportFilter || competition.sport_type === sportFilter
+
+      return matchesSearch && matchesStatus && matchesStage && matchesSport
+    })
+  }, [data, searchText, statusFilter, stageFilter, sportFilter])
 
   const openNewModal = () => {
     setSelectedCompetition(null)
@@ -217,9 +239,68 @@ export function CompetitionsPage() {
         </div>
       ) : null}
 
+      <div className="mb-6 grid gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:grid-cols-[1.5fr_1fr]">
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">Recherche</label>
+          <input
+            type="search"
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
+            placeholder="Rechercher nom, compétition, discipline ou lieu"
+            className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-400"
+          />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
+            Statut
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            >
+              <option value="">Tous</option>
+              <option value="À venir">À venir</option>
+              <option value="En cours">En cours</option>
+              <option value="Terminée">Terminée</option>
+              <option value="Annulée">Annulée</option>
+            </select>
+          </label>
+          <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
+            Étape
+            <select
+              value={stageFilter}
+              onChange={(event) => setStageFilter(event.target.value)}
+              className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            >
+              <option value="">Toutes</option>
+              <option value="Qualifications">Qualifications</option>
+              <option value="Huitièmes de finale">Huitièmes de finale</option>
+              <option value="Quarts de finale">Quarts de finale</option>
+              <option value="Demi-finales">Demi-finales</option>
+              <option value="Finale">Finale</option>
+              <option value="Match pour la troisième place">Match pour la troisième place</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </label>
+          <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
+            Sport
+            <select
+              value={sportFilter}
+              onChange={(event) => setSportFilter(event.target.value)}
+              className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            >
+              <option value="">Tous</option>
+              <option value="sport individuel">Sport individuel</option>
+              <option value="sport collectif">Sport collectif</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <CompetitionTable
-          records={data}
+          records={filteredCompetitions}
           isLoading={isLoading}
           isError={isError}
           onEdit={openEditModal}
