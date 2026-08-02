@@ -8,7 +8,6 @@ import { Modal } from '../../components/Modal'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ToastContainer } from '../../components/Toast'
 import { Spinner } from '../../components/Spinner'
-import { exportCompetitionsToExcel, exportCompetitionsToPdf } from '../../lib/exportUtils'
 import { competitionSchema, type CompetitionFormValues } from './competitionSchema'
 import type { CompetitionRecord, CompetitionRecordInsert } from '../../types/competition'
 import {
@@ -18,6 +17,17 @@ import {
   updateCompetition
 } from '../../services/competitionService'
 import { CompetitionTable } from '../dashboard/CompetitionTable'
+
+// Lazy load export utilities to reduce initial bundle size
+async function lazyExportToExcel(records: CompetitionRecord[]) {
+  const { exportCompetitionsToExcel } = await import('../../lib/exportUtils')
+  return exportCompetitionsToExcel(records)
+}
+
+async function lazyExportToPdf(records: CompetitionRecord[]) {
+  const { exportCompetitionsToPdf } = await import('../../lib/exportUtils')
+  return exportCompetitionsToPdf(records)
+}
 
 const sportDisciplines = {
   'sport collectif': [
@@ -115,6 +125,8 @@ export function CompetitionsPage() {
   const [statusFilter, setStatusFilter] = useState('')
   const [stageFilter, setStageFilter] = useState('')
   const [sportFilter, setSportFilter] = useState('')
+  const [exportingExcel, setExportingExcel] = useState(false)
+  const [exportingPdf, setExportingPdf] = useState(false)
 
   const addToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
     const id = Math.random().toString(36).substr(2, 9)
@@ -211,6 +223,30 @@ export function CompetitionsPage() {
     setDeleteCandidate(record)
   }
 
+  const handleExportExcel = async () => {
+    try {
+      setExportingExcel(true)
+      await lazyExportToExcel(filteredCompetitions)
+      addToast('Export Excel réussi.', 'success')
+    } catch {
+      addToast('Erreur lors de l\'export Excel.', 'error')
+    } finally {
+      setExportingExcel(false)
+    }
+  }
+
+  const handleExportPdf = async () => {
+    try {
+      setExportingPdf(true)
+      await lazyExportToPdf(filteredCompetitions)
+      addToast('Export PDF réussi.', 'success')
+    } catch {
+      addToast('Erreur lors de l\'export PDF.', 'error')
+    } finally {
+      setExportingPdf(false)
+    }
+  }
+
   const onSubmit = async (values: CompetitionFormValues) => {
     if (!auth.user?.id) {
       addToast("Impossible de récupérer l'utilisateur connecté.", 'error')
@@ -239,21 +275,28 @@ export function CompetitionsPage() {
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
-            onClick={() => exportCompetitionsToExcel(filteredCompetitions)}
-            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-900"
+            onClick={handleExportExcel}
+            disabled={exportingExcel || isLoading}
+            aria-label="Exporter les compétitions au format Excel"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-900"
           >
+            {exportingExcel && <Spinner size="sm" className="text-slate-700 dark:text-slate-100" />}
             Exporter Excel
           </button>
           <button
             type="button"
-            onClick={() => exportCompetitionsToPdf(filteredCompetitions)}
-            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-900"
+            onClick={handleExportPdf}
+            disabled={exportingPdf || isLoading}
+            aria-label="Exporter les compétitions au format PDF"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-900"
           >
+            {exportingPdf && <Spinner size="sm" className="text-slate-700 dark:text-slate-100" />}
             Exporter PDF
           </button>
           <button
             type="button"
             onClick={openNewModal}
+            aria-label="Créer une nouvelle compétition"
             className="inline-flex items-center rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-slate-200"
           >
             Nouvelle compétition
@@ -265,22 +308,28 @@ export function CompetitionsPage() {
 
       <div className="mb-6 grid gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:grid-cols-[1.5fr_1fr]">
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">Recherche</label>
+          <label htmlFor="search-input" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+            Recherche
+          </label>
           <input
+            id="search-input"
             type="search"
             value={searchText}
             onChange={(event) => setSearchText(event.target.value)}
             placeholder="Rechercher nom, compétition, discipline ou lieu"
+            aria-label="Rechercher par nom de participant, compétition, discipline ou lieu"
             className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-400"
           />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
-          <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
+          <label htmlFor="status-filter" className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
             Statut
             <select
+              id="status-filter"
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value)}
+              aria-label="Filtrer par statut de compétition"
               className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
             >
               <option value="">Tous</option>
@@ -290,11 +339,13 @@ export function CompetitionsPage() {
               <option value="Annulée">Annulée</option>
             </select>
           </label>
-          <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
+          <label htmlFor="stage-filter" className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
             Étape
             <select
+              id="stage-filter"
               value={stageFilter}
               onChange={(event) => setStageFilter(event.target.value)}
+              aria-label="Filtrer par étape de compétition"
               className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
             >
               <option value="">Toutes</option>
@@ -307,11 +358,13 @@ export function CompetitionsPage() {
               <option value="Autre">Autre</option>
             </select>
           </label>
-          <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
+          <label htmlFor="sport-filter" className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
             Sport
             <select
+              id="sport-filter"
               value={sportFilter}
               onChange={(event) => setSportFilter(event.target.value)}
+              aria-label="Filtrer par type de sport"
               className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
             >
               <option value="">Tous</option>
