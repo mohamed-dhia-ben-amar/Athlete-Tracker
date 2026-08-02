@@ -43,7 +43,8 @@ export function Toast({ id, message, type = 'info', duration = 4000, onClose }: 
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
-      className={`border ${bgColor} rounded-2xl p-4 shadow-lg`}
+      style={{ borderWidth: 1 }}
+      className={`${bgColor} rounded-2xl p-4 shadow-lg`}
     >
       <div className="flex items-center gap-3">
         {type === 'success' && <Check className={`h-5 w-5 flex-shrink-0 ${iconColor}`} />}
