@@ -2,40 +2,43 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from './useAuth'
 
-const loginSchema = z.object({
-  email: z.string().email({ message: 'Adresse e-mail invalide' }),
-  password: z.string().min(6, { message: 'Le mot de passe doit contenir au moins 6 caractères' })
-})
+const signupSchema = z
+  .object({
+    email: z.string().email({ message: 'Adresse e-mail invalide' }),
+    password: z.string().min(6, { message: 'Le mot de passe doit contenir au moins 6 caractères' }),
+    confirmPassword: z.string().min(6, { message: 'Confirmation requise' })
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Les mots de passe ne correspondent pas',
+    path: ['confirmPassword']
+  })
 
-type LoginFormValues = z.infer<typeof loginSchema>
+type SignupFormValues = z.infer<typeof signupSchema>
 
-export function LoginPage() {
+export function SignupPage() {
   const auth = useAuth()
   const navigate = useNavigate()
-  const location = useLocation()
   const [error, setError] = useState<string | null>(null)
-
-  const from = (location.state as { from?: Location })?.from?.pathname || '/'
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting }
-  } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema)
+  } = useForm<SignupFormValues>({
+    resolver: zodResolver(signupSchema)
   })
 
-  const onSubmit = async (values: LoginFormValues) => {
+  const onSubmit = async (values: SignupFormValues) => {
     setError(null)
-    const { error } = await auth.signIn(values.email, values.password)
+    const { error } = await auth.signUp(values.email, values.password)
     if (error) {
       setError(error.message)
       return
     }
-    navigate(from, { replace: true })
+    navigate('/login', { replace: true })
   }
 
   return (
@@ -43,8 +46,8 @@ export function LoginPage() {
       <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 shadow-xl dark:border-slate-800 dark:bg-slate-900">
         <div className="mb-6 text-center">
           <p className="text-sm uppercase tracking-[0.2em] text-slate-500">Athletes Tracker</p>
-          <h1 className="mt-3 text-3xl font-semibold">Connexion</h1>
-          <p className="mt-2 text-sm text-slate-500">Accédez à votre espace de gestion de compétitions</p>
+          <h1 className="mt-3 text-3xl font-semibold">Créer un compte</h1>
+          <p className="mt-2 text-sm text-slate-500">Inscrivez-vous pour gérer vos compétitions.</p>
         </div>
 
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
@@ -68,6 +71,16 @@ export function LoginPage() {
             {errors.password && <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>}
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Confirmer le mot de passe</label>
+            <input
+              type="password"
+              className="mt-2 w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-400"
+              {...register('confirmPassword')}
+            />
+            {errors.confirmPassword && <p className="mt-2 text-sm text-red-600">{errors.confirmPassword.message}</p>}
+          </div>
+
           {error && <div className="rounded-2xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-200">{error}</div>}
 
           <button
@@ -75,14 +88,14 @@ export function LoginPage() {
             disabled={isSubmitting}
             className="inline-flex w-full justify-center rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSubmitting ? 'Connexion en cours…' : 'Se connecter'}
+            {isSubmitting ? 'Création du compte…' : 'Créer un compte'}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
-          Pas encore de compte ?{' '}
-          <Link to="/signup" className="font-semibold text-slate-900 hover:underline dark:text-slate-100">
-            Créer un compte
+          Déjà un compte ?{' '}
+          <Link to="/login" className="font-semibold text-slate-900 hover:underline dark:text-slate-100">
+            Se connecter
           </Link>
         </p>
       </div>

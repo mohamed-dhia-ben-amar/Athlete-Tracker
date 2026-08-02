@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './features/auth/AuthProvider'
 import { LoginPage } from './features/auth/LoginPage'
+import { SignupPage } from './features/auth/SignupPage'
 import { DashboardPage } from './features/dashboard/DashboardPage'
 import { CompetitionsPage } from './features/competitions/CompetitionsPage'
 import { ExportsPage } from './features/exports/ExportsPage'
@@ -13,14 +14,15 @@ export default function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
+        <Route path="/signup" element={<SignupPage />} />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
           <Route
             path="/competitions"
             element={
