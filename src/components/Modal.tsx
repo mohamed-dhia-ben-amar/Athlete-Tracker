@@ -33,7 +33,7 @@ export function Modal({ isOpen, title, description, onClose, children }: ModalPr
     <AnimatePresence>
       {isOpen && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4" 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-3 sm:p-4" 
           onClick={onClose}
           role="presentation"
         >
@@ -50,14 +50,14 @@ export function Modal({ isOpen, title, description, onClose, children }: ModalPr
             aria-labelledby="modal-title"
             aria-describedby={description ? 'modal-description' : undefined}
           >
-            <div className="w-full max-w-3xl overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-slate-900/10 dark:bg-slate-950 dark:ring-slate-800">
-              <div className="flex items-start justify-between border-b border-slate-200 px-6 py-5 dark:border-slate-800">
-                <div>
-                  <h2 id="modal-title" className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+            <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white shadow-2xl ring-1 ring-slate-900/10 dark:bg-slate-950 dark:ring-slate-800 sm:max-w-3xl">
+              <div className="sticky top-0 flex flex-col items-start justify-between border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-950 sm:flex-row sm:items-center sm:px-6 sm:py-5">
+                <div className="flex-1">
+                  <h2 id="modal-title" className="text-lg font-semibold text-slate-900 dark:text-slate-100 sm:text-xl">
                     {title}
                   </h2>
                   {description ? (
-                    <p id="modal-description" className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                    <p id="modal-description" className="mt-1 text-xs text-slate-500 dark:text-slate-400 sm:mt-2 sm:text-sm">
                       {description}
                     </p>
                   ) : null}
@@ -66,12 +66,12 @@ export function Modal({ isOpen, title, description, onClose, children }: ModalPr
                   type="button"
                   onClick={onClose}
                   aria-label="Fermer la boîte de dialogue"
-                  className="rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                  className="mt-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 sm:mt-0"
                 >
                   Fermer
                 </button>
               </div>
-              <div className="p-6">{children}</div>
+              <div className="p-4 sm:p-6">{children}</div>
             </div>
           </motion.div>
         </div>

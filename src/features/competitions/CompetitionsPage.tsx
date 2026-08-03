@@ -267,18 +267,18 @@ export function CompetitionsPage() {
 
   return (
     <AppShell title="Compétitions" description="Consultez, créez et mettez à jour vos compétitions." >
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-6 space-y-3">
         <div>
-          <p className="text-sm uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Gestion</p>
-          <h1 className="mt-2 text-3xl font-semibold text-slate-900 dark:text-slate-100">Compétitions</h1>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400 sm:text-sm">Gestion</p>
+          <h1 className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100 sm:mt-2 sm:text-3xl">Compétitions</h1>
         </div>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-3">
           <button
             type="button"
             onClick={handleExportExcel}
             disabled={exportingExcel || isLoading}
             aria-label="Exporter les compétitions au format Excel"
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-900"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-900 sm:w-auto sm:px-4 sm:py-3 sm:text-sm"
           >
             {exportingExcel && <Spinner size="sm" className="text-slate-700 dark:text-slate-100" />}
             Exporter Excel
@@ -288,7 +288,7 @@ export function CompetitionsPage() {
             onClick={handleExportPdf}
             disabled={exportingPdf || isLoading}
             aria-label="Exporter les compétitions au format PDF"
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-900"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-900 sm:w-auto sm:px-4 sm:py-3 sm:text-sm"
           >
             {exportingPdf && <Spinner size="sm" className="text-slate-700 dark:text-slate-100" />}
             Exporter PDF
@@ -297,7 +297,7 @@ export function CompetitionsPage() {
             type="button"
             onClick={openNewModal}
             aria-label="Créer une nouvelle compétition"
-            className="inline-flex items-center rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-slate-200"
+            className="inline-flex w-full items-center justify-center rounded-2xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-slate-200 sm:w-auto sm:px-4 sm:py-3 sm:text-sm"
           >
             Nouvelle compétition
           </button>
@@ -306,9 +306,9 @@ export function CompetitionsPage() {
 
       <ToastContainer toasts={toasts} onClose={removeToast} />
 
-      <div className="mb-6 grid gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 md:grid-cols-[1.5fr_1fr]">
+      <div className="mb-6 space-y-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
         <div className="space-y-2">
-          <label htmlFor="search-input" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+          <label htmlFor="search-input" className="block text-xs font-medium text-slate-700 dark:text-slate-200 sm:text-sm">
             Recherche
           </label>
           <input
@@ -318,19 +318,19 @@ export function CompetitionsPage() {
             onChange={(event) => setSearchText(event.target.value)}
             placeholder="Rechercher nom, compétition, discipline ou lieu"
             aria-label="Rechercher par nom de participant, compétition, discipline ou lieu"
-            className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-400"
+            className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-400 sm:px-4 sm:py-3 sm:text-sm"
           />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-3">
-          <label htmlFor="status-filter" className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <label htmlFor="status-filter" className="space-y-2 text-xs text-slate-700 dark:text-slate-200 sm:text-sm">
             Statut
             <select
               id="status-filter"
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value)}
               aria-label="Filtrer par statut de compétition"
-              className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 sm:px-4 sm:py-3 sm:text-sm"
             >
               <option value="">Tous</option>
               <option value="À venir">À venir</option>
@@ -339,14 +339,14 @@ export function CompetitionsPage() {
               <option value="Annulée">Annulée</option>
             </select>
           </label>
-          <label htmlFor="stage-filter" className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
+          <label htmlFor="stage-filter" className="space-y-2 text-xs text-slate-700 dark:text-slate-200 sm:text-sm">
             Étape
             <select
               id="stage-filter"
               value={stageFilter}
               onChange={(event) => setStageFilter(event.target.value)}
               aria-label="Filtrer par étape de compétition"
-              className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 sm:px-4 sm:py-3 sm:text-sm"
             >
               <option value="">Toutes</option>
               <option value="Qualifications">Qualifications</option>
@@ -358,14 +358,14 @@ export function CompetitionsPage() {
               <option value="Autre">Autre</option>
             </select>
           </label>
-          <label htmlFor="sport-filter" className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
+          <label htmlFor="sport-filter" className="space-y-2 text-xs text-slate-700 dark:text-slate-200 sm:text-sm">
             Sport
             <select
               id="sport-filter"
               value={sportFilter}
               onChange={(event) => setSportFilter(event.target.value)}
               aria-label="Filtrer par type de sport"
-              className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+              className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 sm:px-4 sm:py-3 sm:text-sm"
             >
               <option value="">Tous</option>
               <option value="sport individuel">Sport individuel</option>
@@ -375,7 +375,7 @@ export function CompetitionsPage() {
         </div>
       </div>
 
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="overflow-x-auto rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
         <CompetitionTable
           records={filteredCompetitions}
           isLoading={isLoading}

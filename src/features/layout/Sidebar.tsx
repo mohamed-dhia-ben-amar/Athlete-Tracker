@@ -9,7 +9,7 @@ const navItems = [
 
 export function Sidebar() {
   return (
-    <aside className="hidden w-72 shrink-0 flex-col border-r border-slate-200 bg-white p-6 text-slate-900 shadow-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 xl:flex">
+    <aside className="w-72 shrink-0 flex-col border-r border-slate-200 bg-white p-6 text-slate-900 shadow-sm dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
       <div className="mb-10">
         <p className="text-xs uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Athletes Tracker</p>
         <h2 className="mt-4 text-2xl font-semibold">Administration</h2>

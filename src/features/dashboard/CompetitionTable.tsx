@@ -29,7 +29,6 @@ export function CompetitionTable({ records, isLoading, isError, onEdit, onDelete
     () => {
       const baseColumns: ColumnDef<CompetitionRecord>[] = [
         { header: 'Participant', accessorKey: 'participant_name' },
-        { header: 'Type', accessorKey: 'participant_type' },
         { header: 'Sport', accessorKey: 'sport_type' },
         { header: 'Discipline', accessorKey: 'discipline' },
         { header: 'Compétition', accessorKey: 'competition_name' },
@@ -38,15 +37,7 @@ export function CompetitionTable({ records, isLoading, isError, onEdit, onDelete
           accessorKey: 'competition_datetime',
           cell: (info) => new Date(info.getValue() as string).toLocaleDateString('fr-FR')
         },
-        {
-          header: 'Heure',
-          accessorKey: 'competition_datetime',
-          cell: (info) => new Date(info.getValue() as string).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-        },
-        { header: 'Lieu', accessorKey: 'location' },
-        { header: 'Étape', accessorKey: 'stage' },
-        { header: 'Statut', accessorKey: 'status' },
-        { header: 'Résultat', accessorKey: 'result' }
+        { header: 'Statut', accessorKey: 'status' }
       ]
 
       if (onEdit || onDelete) {
@@ -99,73 +90,148 @@ export function CompetitionTable({ records, isLoading, isError, onEdit, onDelete
     debugTable: false
   })
 
-  const pageCount = table.getPageCount()
-
   if (isLoading) {
-    return <CompetitionTableSkeleton rows={5} />
+    return <CompetitionTableSkeleton />
   }
 
   if (isError) {
     return (
-      <div className="rounded-3xl border border-red-200 bg-red-50 p-8 text-center text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
-        Impossible de charger les compétitions. Vérifiez votre connexion.
+      <div className="flex justify-center rounded-2xl border border-red-200 bg-red-50 p-8 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
+        <p className="font-semibold">Erreur lors du chargement des données</p>
       </div>
     )
   }
 
   if (records.length === 0) {
     return (
-      <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center text-slate-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
-        Aucune compétition trouvée pour le moment.
+      <div className="flex justify-center rounded-2xl border border-slate-200 bg-slate-50 p-8 text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+        <p className="font-medium">Aucune compétition trouvée. Créez votre première compétition!</p>
       </div>
     )
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-sm text-slate-500 dark:text-slate-400">
-          Affichage {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} -{' '}
-          {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, records.length)} sur {records.length}
-        </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <label className="text-sm text-slate-600 dark:text-slate-300">
-            Lignes par page :
-            <select
-              value={pagination.pageSize}
-              onChange={(event) => setPagination((prev) => ({ ...prev, pageSize: Number(event.target.value), pageIndex: 0 }))}
-              className="ml-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm outline-none transition hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-            >
-              {pageSizes.map((size) => (
-                <option key={size} value={size}>
-                  {size}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+      {/* Mobile: Card View */}
+      <div className="space-y-4 md:hidden">
+        {table.getRowModel().rows.map((row) => (
+          <div key={row.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Participant</p>
+                <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">{row.original.participant_name}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Sport</p>
+                  <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{row.original.sport_type}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Statut</p>
+                  <span className={`mt-1 inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+                    row.original.status === 'À venir'
+                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                      : row.original.status === 'En cours'
+                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                        : row.original.status === 'Terminée'
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                          : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                  }`}>
+                    {row.original.status}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Discipline</p>
+                <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{row.original.discipline}</p>
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Compétition</p>
+                <p className="mt-1 text-sm font-medium text-slate-900 dark:text-slate-100">{row.original.competition_name}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Date</p>
+                  <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+                    {new Date(row.original.competition_datetime).toLocaleDateString('fr-FR')}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Heure</p>
+                  <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+                    {new Date(row.original.competition_datetime).toLocaleTimeString('fr-FR', {
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+              </div>
+
+              {row.original.location && (
+                <div>
+                  <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Lieu</p>
+                  <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{row.original.location}</p>
+                </div>
+              )}
+
+              {row.original.result && (
+                <div>
+                  <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Résultat</p>
+                  <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{row.original.result}</p>
+                </div>
+              )}
+
+              {(onEdit || onDelete) && (
+                <div className="flex gap-2 border-t border-slate-200 pt-3 dark:border-slate-700">
+                  {onEdit && (
+                    <button
+                      type="button"
+                      onClick={() => onEdit(row.original)}
+                      className="flex-1 rounded-2xl border border-slate-200 bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
+                    >
+                      Éditer
+                    </button>
+                  )}
+                  {onDelete && (
+                    <button
+                      type="button"
+                      onClick={() => onDelete(row.original)}
+                      className="flex-1 rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100 dark:border-red-700 dark:bg-red-950 dark:text-red-200 dark:hover:bg-red-900"
+                    >
+                      Supprimer
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
 
-      <div className="overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <table className="min-w-full border-collapse text-left text-sm">
+      {/* Desktop: Table View */}
+      <div className="hidden overflow-x-auto md:block">
+        <table className="w-full">
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
+              <tr key={headerGroup.id} className="border-b border-slate-200 dark:border-slate-800">
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="border-b border-slate-200 px-3 py-3 font-semibold text-slate-700 dark:border-slate-800 dark:text-slate-200"
+                    onClick={header.column.getToggleSortingHandler()}
+                    className="cursor-pointer select-none bg-slate-50 px-4 py-3 text-left text-xs font-semibold uppercase text-slate-700 transition hover:bg-slate-100 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
                   >
-                    {header.isPlaceholder ? null : (
-                      <button
-                        type="button"
-                        className="inline-flex items-center gap-2"
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                        {{ asc: '↑', desc: '↓' }[header.column.getIsSorted() as string] ?? '↕'}
-                      </button>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                      {header.column.getIsSorted() && (
+                        <span className="text-slate-900 dark:text-slate-100">
+                          {header.column.getIsSorted() === 'desc' ? ' ↓' : ' ↑'}
+                        </span>
+                      )}
+                    </div>
                   </th>
                 ))}
               </tr>
@@ -173,9 +239,9 @@ export function CompetitionTable({ records, isLoading, isError, onEdit, onDelete
           </thead>
           <tbody>
             {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="border-b border-slate-100 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900">
+              <tr key={row.id} className="border-b border-slate-200 transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900">
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-3 py-3 text-slate-700 dark:text-slate-200">
+                  <td key={cell.id} className="px-4 py-3 text-sm text-slate-700 dark:text-slate-300">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
@@ -185,26 +251,41 @@ export function CompetitionTable({ records, isLoading, isError, onEdit, onDelete
         </table>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-sm text-slate-500 dark:text-slate-400">
-          Page {table.getState().pagination.pageIndex + 1} sur {pageCount}
+      {/* Pagination */}
+      <div className="flex flex-col gap-4 border-t border-slate-200 pt-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap gap-2">
+          {pageSizes.map((pageSize) => (
+            <button
+              key={pageSize}
+              onClick={() => table.setPageSize(pageSize)}
+              className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                table.getState().pagination.pageSize === pageSize
+                  ? 'border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-950'
+                  : 'border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-900'
+              }`}
+            >
+              {pageSize} / page
+            </button>
+          ))}
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+
+        <div className="flex items-center gap-2">
           <button
-            type="button"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
-            className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 transition hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-900"
           >
-            Précédent
+            ← Précédent
           </button>
+          <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+            Page {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}
+          </span>
           <button
-            type="button"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
-            className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 transition hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-900"
           >
-            Suivant
+            Suivant →
           </button>
         </div>
       </div>
