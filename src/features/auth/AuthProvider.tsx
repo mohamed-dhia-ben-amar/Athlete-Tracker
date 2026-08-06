@@ -1,5 +1,6 @@
 import { createContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { supabase } from '../../lib/supabase'
+import { SITE_URL } from '../../constants/env'
 import type { Session, User } from '@supabase/supabase-js'
 
 export interface AuthContextValue {
@@ -55,7 +56,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp: async (email: string, password: string) => {
         const { error } = await supabase.auth.signUp({
           email,
-          password
+          password,
+          options: {
+            emailRedirectTo: SITE_URL
+          }
         })
         return { error }
       },
