@@ -268,7 +268,7 @@ export function FlightsPage() {
                     {flight.compagnie_aerienne} — {flight.numero_vol}
                   </p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {flight.aeroport_depart} → {flight.aeroport_arrivee}
+                     {flight.aeroport_depart} To {flight.aeroport_arrivee}
                   </p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     {getParticipantName(flight)} — {flight.type_participant}

@@ -88,3 +88,69 @@ export function exportCompetitionsToPdf(records: CompetitionRecord[]) {
 
   doc.save(`competitions-${new Date().toISOString().slice(0, 10)}.pdf`)
 }
+
+export interface TimelineEvent {
+  date: string
+  type: 'competition' | 'flight' | 'accommodation'
+  label: string
+  detail: string
+}
+
+export function exportTimelineToPdf(
+  participantName: string,
+  participantType: string,
+  events: TimelineEvent[]
+) {
+  const doc = new jsPDF({ orientation: 'landscape' })
+  const pageWidth = doc.internal.pageSize.getWidth()
+  const pageHeight = doc.internal.pageSize.getHeight()
+  const margin = 14
+  const footerHeight = 8
+
+  const typeLabels: Record<string, string> = {
+    competition: 'Compétition',
+    flight: 'Vol',
+    accommodation: 'Hébergement'
+  }
+
+  const drawFooter = () => {
+    doc.setFontSize(8)
+    doc.setTextColor(148, 163, 184)
+    doc.text(
+      `Chronologie — ${participantName}`,
+      margin,
+      pageHeight - footerHeight
+    )
+    doc.text(
+      `Page ${doc.getNumberOfPages()}`,
+      pageWidth - margin,
+      pageHeight - footerHeight,
+      { align: 'right' }
+    )
+  }
+
+  const body = events.map((event) => [
+    formatDate(event.date),
+    typeLabels[event.type] ?? event.type,
+    event.label,
+    event.detail
+  ])
+
+  autoTable(doc, {
+    startY: 20,
+    head: [['Date', 'Type', 'Événement', 'Détails']],
+    body,
+    styles: { fontSize: 9, cellPadding: 4 },
+    headStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: [248, 250, 252] },
+    margin: { left: margin, right: margin, bottom: footerHeight + 4 },
+    tableLineColor: [226, 232, 240],
+    tableLineWidth: 0.1,
+    didDrawPage: (_data: unknown) => {
+      drawFooter()
+    },
+    pageBreak: 'auto'
+  })
+
+  doc.save(`chronologie-${participantName.replace(/\s+/g, '-')}-${new Date().toISOString().slice(0, 10)}.pdf`)
+}

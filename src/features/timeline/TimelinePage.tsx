@@ -7,17 +7,9 @@ import { fetchOfficials } from '../../services/officialService'
 import { fetchCompetitions } from '../../services/competitionService'
 import { fetchFlights } from '../../services/flightService'
 import { fetchAccommodations } from '../../services/accommodationService'
-import { exportCompetitionsToPdf } from '../../lib/exportUtils'
-import type { CompetitionRecord, FlightRecord, AccommodationRecord, AthleteRecord, TeamRecord, OfficialRecord } from '../../types/competition'
+import { exportTimelineToPdf } from '../../lib/exportUtils'
+import type { AthleteRecord, TeamRecord, OfficialRecord, TimelineEvent } from '../../types/competition'
 import { ToastContainer } from '../../components/Toast'
-
-type TimelineEvent = {
-  date: string
-  type: 'competition' | 'flight' | 'accommodation'
-  label: string
-  detail: string
-  record: CompetitionRecord | FlightRecord | AccommodationRecord
-}
 
 export function TimelinePage() {
   const [selectedParticipant, setSelectedParticipant] = useState<string>('')
@@ -90,8 +82,7 @@ export function TimelinePage() {
         date: c.date_heure,
         type: 'competition',
         label: c.nom_competition,
-        detail: `${c.etape} — ${c.statut}${c.resultat ? ` — ${c.resultat}` : ''}`,
-        record: c
+        detail: `${c.etape} — ${c.statut}${c.resultat ? ` — ${c.resultat}` : ''}`
       })
     })
 
@@ -105,9 +96,8 @@ export function TimelinePage() {
       events.push({
         date: f.date_heure_depart,
         type: 'flight',
-        label: `Vol ${f.aeroport_depart} → ${f.aeroport_arrivee}`,
-        detail: `${f.compagnie_aerienne} — ${f.numero_vol}`,
-        record: f
+        label: `Vol ${f.aeroport_depart} To ${f.aeroport_arrivee}`,
+        detail: `${f.compagnie_aerienne} — ${f.numero_vol}`
       })
     })
 
@@ -122,8 +112,7 @@ export function TimelinePage() {
         date: a.date_arrivee,
         type: 'accommodation',
         label: `${a.nom_hotel} — ${a.ville}`,
-        detail: `Du ${a.date_arrivee} au ${a.date_depart}${a.numero_chambre ? ` — Chambre ${a.numero_chambre}` : ''}`,
-        record: a
+        detail: `Du ${a.date_arrivee} au ${a.date_depart}${a.numero_chambre ? ` — Chambre ${a.numero_chambre}` : ''}`
       })
     })
 
@@ -132,8 +121,8 @@ export function TimelinePage() {
 
   const handleExportPdf = async () => {
     try {
-      await exportCompetitionsToPdf(competitions)
-      addToast('PDF généré avec succès.', 'success')
+      exportTimelineToPdf(participantName, participantType, timelineEvents)
+      addToast('PDF de la chronologie généré avec succès.', 'success')
     } catch {
       addToast('Erreur lors de la génération du PDF.', 'error')
     }
