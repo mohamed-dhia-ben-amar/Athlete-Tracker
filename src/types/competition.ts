@@ -140,6 +140,13 @@ export type CompetitionRecordUpdate = Partial<Omit<CompetitionRecord, 'created_b
   id: string
 }
 
+export interface TimelineEvent {
+  date: string
+  type: 'competition' | 'flight' | 'accommodation'
+  label: string
+  detail: string
+}
+
 export type SportRecordInsert = Omit<SportRecord, 'id' | 'created_at' | 'updated_at'>
 export type SportRecordUpdate = Partial<Omit<SportRecord, 'created_at' | 'updated_at'>> & {
   id: string
