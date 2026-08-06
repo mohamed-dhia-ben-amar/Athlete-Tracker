@@ -3,6 +3,13 @@ import { NavLink } from 'react-router-dom'
 const navItems = [
   { label: 'Tableau de bord', path: '/' },
   { label: 'Compétitions', path: '/competitions' },
+  { label: 'Sports', path: '/sports' },
+  { label: 'Athlètes', path: '/athletes' },
+  { label: 'Équipes', path: '/teams' },
+  { label: 'Officiels', path: '/officials' },
+  { label: 'Vols', path: '/flights' },
+  { label: 'Hébergements', path: '/accommodations' },
+  { label: 'Chronologie', path: '/timeline' },
   { label: 'Exports', path: '/exports' },
   { label: 'Paramètres', path: '/settings' }
 ]

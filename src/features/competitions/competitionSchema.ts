@@ -1,15 +1,17 @@
 import { z } from 'zod'
 
-const insertSchema = z.object({
-  participant_type: z.enum(['athlète', 'équipe']),
-  participant_name: z.string().min(1, { message: 'Le nom est requis' }),
-  sport_type: z.enum(['sport individuel', 'sport collectif']),
-  discipline: z.string().min(1, { message: 'La discipline est requise' }),
-  competition_name: z.string().min(1, { message: 'Le nom de la compétition est requis' }),
-  competition_date: z.string().min(1, { message: 'La date est requise' }),
-  competition_time: z.string().min(1, { message: 'L’heure est requise' }),
-  location: z.string().min(1, { message: 'Le lieu est requis' }),
-  stage: z.enum([
+export const participantTypeSchema = z.enum(['athlète', 'équipe', 'officiel'])
+
+export const competitionSchema = z.object({
+  type_participant: participantTypeSchema,
+  athlete_id: z.string().optional(),
+  equipe_id: z.string().optional(),
+  officiel_id: z.string().optional(),
+  sport_id: z.string().min(1, { message: 'Le sport est requis' }),
+  nom_competition: z.string().min(1, { message: 'Le nom de la compétition est requis' }),
+  date_heure: z.string().min(1, { message: "La date et l'heure sont requises" }),
+  lieu: z.string().min(1, { message: 'Le lieu est requis' }),
+  etape: z.enum([
     'Qualifications',
     'Huitièmes de finale',
     'Quarts de finale',
@@ -18,10 +20,8 @@ const insertSchema = z.object({
     'Match pour la troisième place',
     'Autre'
   ]),
-  status: z.enum(['À venir', 'En cours', 'Terminée', 'Annulée']),
-  result: z.string().optional()
+  statut: z.enum(['À venir', 'En cours', 'Terminée', 'Annulée']),
+  resultat: z.string().optional()
 })
-
-export const competitionSchema = insertSchema
 
 export type CompetitionFormValues = z.infer<typeof competitionSchema>

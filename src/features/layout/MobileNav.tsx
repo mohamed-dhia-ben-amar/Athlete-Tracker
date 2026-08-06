@@ -5,6 +5,13 @@ import { useAuth } from '../auth/useAuth'
 const navItems = [
   { label: 'Tableau de bord', path: '/' },
   { label: 'Compétitions', path: '/competitions' },
+  { label: 'Sports', path: '/sports' },
+  { label: 'Athlètes', path: '/athletes' },
+  { label: 'Équipes', path: '/teams' },
+  { label: 'Officiels', path: '/officials' },
+  { label: 'Vols', path: '/flights' },
+  { label: 'Hébergements', path: '/accommodations' },
+  { label: 'Chronologie', path: '/timeline' },
   { label: 'Exports', path: '/exports' },
   { label: 'Paramètres', path: '/settings' }
 ]
@@ -21,7 +28,6 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Overlay */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -31,7 +37,6 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
             aria-hidden="true"
           />
 
-          {/* Sidebar Panel */}
           <motion.aside
             initial={{ x: '-100%' }}
             animate={{ x: 0 }}

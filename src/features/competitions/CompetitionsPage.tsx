@@ -9,110 +9,36 @@ import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ToastContainer } from '../../components/Toast'
 import { Spinner } from '../../components/Spinner'
 import { competitionSchema, type CompetitionFormValues } from './competitionSchema'
-import type { CompetitionRecord, CompetitionRecordInsert } from '../../types/competition'
+import type { CompetitionRecord } from '../../types/competition'
 import {
   createCompetition,
   deleteCompetition,
   fetchCompetitions,
   updateCompetition
 } from '../../services/competitionService'
+import { fetchSports } from '../../services/sportService'
+import { fetchAthletes } from '../../services/athleteService'
+import { fetchTeams } from '../../services/teamService'
+import { fetchOfficials } from '../../services/officialService'
 import { CompetitionTable } from '../dashboard/CompetitionTable'
 
-// Lazy load export utilities to reduce initial bundle size
-async function lazyExportToExcel(records: CompetitionRecord[]) {
-  const { exportCompetitionsToExcel } = await import('../../lib/exportUtils')
-  return exportCompetitionsToExcel(records)
+function lazyExportToExcel(records: CompetitionRecord[]) {
+  return import('../../lib/exportUtils').then((mod) => mod.exportCompetitionsToExcel(records))
 }
 
-async function lazyExportToPdf(records: CompetitionRecord[]) {
-  const { exportCompetitionsToPdf } = await import('../../lib/exportUtils')
-  return exportCompetitionsToPdf(records)
-}
-
-const sportDisciplines = {
-  'sport collectif': [
-    'Basketball 3x3 Hommes',
-    'Basketball 3x3 Femmes',
-    'Handball Hommes',
-    'Handball Femmes',
-    'Volleyball Hommes',
-    'Football Hommes'
-  ],
-  'sport individuel': [
-    'Tennis de table',
-    'Padel',
-    'Boxe',
-    'Triathlon',
-    'Tennis',
-    'Gymnastique Artistique',
-    'Gymnastique Rythmique',
-    'Tir à l’arc',
-    'Voile',
-    'Athlétisme',
-    'Natation',
-    'Cyclisme',
-    'Tir Sportif',
-    'Haltérophilie',
-    'Lutte',
-    'Aviron',
-    'Équitation',
-    'Canoë Sprint',
-    'Judo',
-    'Escrime',
-    'Karaté',
-    'Pétanque',
-    'Taekwondo'
-  ]
+function lazyExportToPdf(records: CompetitionRecord[]) {
+  return import('../../lib/exportUtils').then((mod) => mod.exportCompetitionsToPdf(records))
 }
 
 const defaultFormValues: CompetitionFormValues = {
-  participant_type: 'athlète',
-  participant_name: '',
-  sport_type: 'sport individuel',
-  discipline: sportDisciplines['sport individuel'][0],
-  competition_name: '',
-  competition_date: new Date().toISOString().slice(0, 10),
-  competition_time: '12:00',
-  location: '',
-  stage: 'Qualifications',
-  status: 'À venir',
-  result: ''
-}
-
-function buildCompetitionInsert(values: CompetitionFormValues, userId: string): CompetitionRecordInsert {
-  return {
-    participant_type: values.participant_type,
-    participant_name: values.participant_name,
-    sport_type: values.sport_type,
-    discipline: values.discipline,
-    competition_name: values.competition_name,
-    competition_datetime: `${values.competition_date}T${values.competition_time}:00`,
-    location: values.location,
-    stage: values.stage,
-    status: values.status,
-    result: values.result || null,
-    created_by: userId
-  }
-}
-
-function formatCompetitionForForm(record: CompetitionRecord): CompetitionFormValues {
-  const date = new Date(record.competition_datetime)
-  const isoDate = date.toISOString().slice(0, 10)
-  const isoTime = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false })
-
-  return {
-    participant_type: record.participant_type,
-    participant_name: record.participant_name,
-    sport_type: record.sport_type,
-    discipline: record.discipline,
-    competition_name: record.competition_name,
-    competition_date: isoDate,
-    competition_time: isoTime,
-    location: record.location,
-    stage: record.stage,
-    status: record.status,
-    result: record.result ?? ''
-  }
+  type_participant: 'athlète',
+  sport_id: '',
+  nom_competition: '',
+  date_heure: '',
+  lieu: '',
+  etape: 'Qualifications',
+  statut: 'À venir',
+  resultat: ''
 }
 
 export function CompetitionsPage() {
@@ -138,7 +64,11 @@ export function CompetitionsPage() {
   }
 
   const auth = useAuth()
-  const { data = [], isLoading, isError } = useQuery(['competitions'], fetchCompetitions)
+  const { data: competitions = [], isLoading, isError } = useQuery(['competitions'], fetchCompetitions)
+  const { data: sports = [] } = useQuery(['sports'], fetchSports)
+  const { data: athletes = [] } = useQuery(['athletes'], fetchAthletes)
+  const { data: teams = [] } = useQuery(['teams'], fetchTeams)
+  const { data: officials = [] } = useQuery(['officials'], fetchOfficials)
 
   const createMutation = useMutation(createCompetition, {
     onSuccess: () => {
@@ -180,32 +110,70 @@ export function CompetitionsPage() {
     defaultValues: defaultFormValues
   })
 
-  const sportType = watch('sport_type')
-  const disciplines = sportDisciplines[sportType]
+  const typeParticipant = watch('type_participant')
+  const sportId = watch('sport_id')
+
+  const athleteOptions = useMemo(
+    () => athletes.filter((a) => a.sport_id === sportId),
+    [athletes, sportId]
+  )
+
+  const teamOptions = useMemo(
+    () => teams.filter((t) => t.sport_id === sportId),
+    [teams, sportId]
+  )
+
+  const officialOptions = useMemo(
+    () => officials.filter((o) => o.actif !== false),
+    [officials]
+  )
 
   useEffect(() => {
-    if (!disciplines.includes(watch('discipline'))) {
-      setValue('discipline', disciplines[0])
+    if (sports.length > 0 && !sportId) {
+      setValue('sport_id', sports[0].id)
     }
-  }, [sportType])
+  }, [sports, sportId, setValue])
 
   const filteredCompetitions = useMemo(() => {
-    return data.filter((competition) => {
+    return competitions.filter((competition) => {
       const search = searchText.trim().toLowerCase()
+      const participantName = getParticipantName(competition).toLowerCase()
+      const sportName = getSportName(competition).toLowerCase()
       const matchesSearch =
         !search ||
-        competition.participant_name.toLowerCase().includes(search) ||
-        competition.competition_name.toLowerCase().includes(search) ||
-        competition.discipline.toLowerCase().includes(search) ||
-        competition.location.toLowerCase().includes(search)
+        participantName.includes(search) ||
+        competition.nom_competition.toLowerCase().includes(search) ||
+        competition.lieu.toLowerCase().includes(search) ||
+        (competition.resultat ?? '').toLowerCase().includes(search) ||
+        sportName.includes(search)
 
-      const matchesStatus = !statusFilter || competition.status === statusFilter
-      const matchesStage = !stageFilter || competition.stage === stageFilter
-      const matchesSport = !sportFilter || competition.sport_type === sportFilter
+      const matchesStatus = !statusFilter || competition.statut === statusFilter
+      const matchesStage = !stageFilter || competition.etape === stageFilter
+      const matchesSport = !sportFilter || competition.sport_id === sportFilter
 
       return matchesSearch && matchesStatus && matchesStage && matchesSport
     })
-  }, [data, searchText, statusFilter, stageFilter, sportFilter])
+  }, [competitions, searchText, statusFilter, stageFilter, sportFilter])
+
+  function getParticipantName(record: CompetitionRecord): string {
+    if (record.type_participant === 'athlète' && record.athletes) {
+      return `${record.athletes.prenom} ${record.athletes.nom}`
+    }
+    if (record.type_participant === 'équipe' && record.equipes) {
+      return record.equipes.nom
+    }
+    if (record.type_participant === 'officiel' && record.officiels) {
+      return `${record.officiels.prenom} ${record.officiels.nom}`
+    }
+    return '—'
+  }
+
+  function getSportName(record: CompetitionRecord): string {
+    if (record.sports) {
+      return record.sports.nom
+    }
+    return '—'
+  }
 
   const openNewModal = () => {
     setSelectedCompetition(null)
@@ -215,7 +183,19 @@ export function CompetitionsPage() {
 
   const openEditModal = (record: CompetitionRecord) => {
     setSelectedCompetition(record)
-    reset(formatCompetitionForForm(record))
+    reset({
+      type_participant: record.type_participant,
+      sport_id: record.sport_id,
+      athlete_id: record.athlete_id ?? '',
+      equipe_id: record.equipe_id ?? '',
+      officiel_id: record.officiel_id ?? '',
+      nom_competition: record.nom_competition,
+      date_heure: record.date_heure.slice(0, 16),
+      lieu: record.lieu,
+      etape: record.etape,
+      statut: record.statut,
+      resultat: record.resultat ?? ''
+    })
     setModalOpen(true)
   }
 
@@ -253,7 +233,14 @@ export function CompetitionsPage() {
       return
     }
 
-    const payload = buildCompetitionInsert(values, auth.user.id)
+    const payload = {
+      ...values,
+      athlete_id: values.athlete_id ?? null,
+      equipe_id: values.equipe_id ?? null,
+      officiel_id: values.officiel_id ?? null,
+      created_by: auth.user.id
+    }
+
     if (selectedCompetition) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { created_by, ...updateData } = payload
@@ -316,13 +303,13 @@ export function CompetitionsPage() {
             type="search"
             value={searchText}
             onChange={(event) => setSearchText(event.target.value)}
-            placeholder="Rechercher nom, compétition, discipline ou lieu"
-            aria-label="Rechercher par nom de participant, compétition, discipline ou lieu"
+            placeholder="Rechercher participant, compétition, discipline, lieu ou résultat"
+            aria-label="Rechercher par participant, compétition, lieu ou résultat"
             className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-400 sm:px-4 sm:py-3 sm:text-sm"
           />
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-4">
           <label htmlFor="status-filter" className="space-y-2 text-xs text-slate-700 dark:text-slate-200 sm:text-sm">
             Statut
             <select
@@ -364,12 +351,28 @@ export function CompetitionsPage() {
               id="sport-filter"
               value={sportFilter}
               onChange={(event) => setSportFilter(event.target.value)}
-              aria-label="Filtrer par type de sport"
+              aria-label="Filtrer par sport"
               className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 sm:px-4 sm:py-3 sm:text-sm"
             >
               <option value="">Tous</option>
-              <option value="sport individuel">Sport individuel</option>
-              <option value="sport collectif">Sport collectif</option>
+              {sports.map((sport) => (
+                <option key={sport.id} value={sport.id}>{sport.nom}</option>
+              ))}
+            </select>
+          </label>
+          <label htmlFor="type-filter" className="space-y-2 text-xs text-slate-700 dark:text-slate-200 sm:text-sm">
+            Participant
+            <select
+              id="type-filter"
+              value=""
+              onChange={() => {}}
+              aria-label="Filtrer par type de participant"
+              className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 sm:px-4 sm:py-3 sm:text-sm"
+            >
+              <option value="">Tous</option>
+              <option value="athlète">Athlète</option>
+              <option value="équipe">Équipe</option>
+              <option value="officiel">Officiel</option>
             </select>
           </label>
         </div>
@@ -395,41 +398,88 @@ export function CompetitionsPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
               Type de participant
-              <select className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" {...register('participant_type')}>
+              <select
+                className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                {...register('type_participant')}
+              >
                 <option value="athlète">Athlète</option>
                 <option value="équipe">Équipe</option>
+                <option value="officiel">Officiel</option>
               </select>
             </label>
 
             <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
-              {watch('participant_type') === 'athlète' ? 'Nom de l’athlète' : 'Nom de l’équipe'}
-              <input
-                type="text"
+              Sport
+              <select
                 className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                {...register('participant_name')}
-              />
-              {errors.participant_name ? <p className="text-xs text-red-600">{errors.participant_name.message}</p> : null}
-            </label>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
-              Type de sport
-              <select className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" {...register('sport_type')}>
-                <option value="sport individuel">Sport individuel</option>
-                <option value="sport collectif">Sport collectif</option>
-              </select>
-            </label>
-
-            <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
-              Discipline
-              <select className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" {...register('discipline')}>
-                {disciplines.map((item) => (
-                  <option key={item} value={item}>{item}</option>
+                {...register('sport_id')}
+              >
+                <option value="">Sélectionner un sport</option>
+                {sports.map((sport) => (
+                  <option key={sport.id} value={sport.id}>{sport.nom}</option>
                 ))}
               </select>
+              {errors.sport_id ? <p className="text-xs text-red-600">{errors.sport_id.message}</p> : null}
             </label>
           </div>
+
+          {typeParticipant === 'athlète' && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
+                Athlète
+                <select
+                  className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                  {...register('athlete_id')}
+                >
+                  <option value="">Sélectionner un athlète</option>
+                  {athleteOptions.map((athlete) => (
+                    <option key={athlete.id} value={athlete.id}>
+                      {athlete.prenom} {athlete.nom}
+                    </option>
+                  ))}
+                </select>
+                {errors.athlete_id ? <p className="text-xs text-red-600">{errors.athlete_id.message}</p> : null}
+              </label>
+            </div>
+          )}
+
+          {typeParticipant === 'équipe' && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
+                Équipe
+                <select
+                  className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                  {...register('equipe_id')}
+                >
+                  <option value="">Sélectionner une équipe</option>
+                  {teamOptions.map((team) => (
+                    <option key={team.id} value={team.id}>{team.nom}</option>
+                  ))}
+                </select>
+                {errors.equipe_id ? <p className="text-xs text-red-600">{errors.equipe_id.message}</p> : null}
+              </label>
+            </div>
+          )}
+
+          {typeParticipant === 'officiel' && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
+                Officiel
+                <select
+                  className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                  {...register('officiel_id')}
+                >
+                  <option value="">Sélectionner un officiel</option>
+                  {officialOptions.map((official) => (
+                    <option key={official.id} value={official.id}>
+                      {official.prenom} {official.nom} — {official.fonction}
+                    </option>
+                  ))}
+                </select>
+                {errors.officiel_id ? <p className="text-xs text-red-600">{errors.officiel_id.message}</p> : null}
+              </label>
+            </div>
+          )}
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
@@ -437,46 +487,37 @@ export function CompetitionsPage() {
               <input
                 type="text"
                 className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                {...register('competition_name')}
+                {...register('nom_competition')}
               />
-              {errors.competition_name ? <p className="text-xs text-red-600">{errors.competition_name.message}</p> : null}
+              {errors.nom_competition ? <p className="text-xs text-red-600">{errors.nom_competition.message}</p> : null}
             </label>
             <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
               Lieu
               <input
                 type="text"
                 className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                {...register('location')}
+                {...register('lieu')}
               />
-              {errors.location ? <p className="text-xs text-red-600">{errors.location.message}</p> : null}
+              {errors.lieu ? <p className="text-xs text-red-600">{errors.lieu.message}</p> : null}
             </label>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
-              Date
+              Date et heure
               <input
-                type="date"
+                type="datetime-local"
                 className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                {...register('competition_date')}
+                {...register('date_heure')}
               />
-              {errors.competition_date ? <p className="text-xs text-red-600">{errors.competition_date.message}</p> : null}
+              {errors.date_heure ? <p className="text-xs text-red-600">{errors.date_heure.message}</p> : null}
             </label>
-            <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
-              Heure
-              <input
-                type="time"
-                className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                {...register('competition_time')}
-              />
-              {errors.competition_time ? <p className="text-xs text-red-600">{errors.competition_time.message}</p> : null}
-            </label>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
             <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
               Étape
-              <select className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" {...register('stage')}>
+              <select
+                className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                {...register('etape')}
+              >
                 <option value="Qualifications">Qualifications</option>
                 <option value="Huitièmes de finale">Huitièmes de finale</option>
                 <option value="Quarts de finale">Quarts de finale</option>
@@ -485,26 +526,33 @@ export function CompetitionsPage() {
                 <option value="Match pour la troisième place">Match pour la troisième place</option>
                 <option value="Autre">Autre</option>
               </select>
+              {errors.etape ? <p className="text-xs text-red-600">{errors.etape.message}</p> : null}
             </label>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
             <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
               Statut
-              <select className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" {...register('status')}>
+              <select
+                className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                {...register('statut')}
+              >
                 <option value="À venir">À venir</option>
                 <option value="En cours">En cours</option>
                 <option value="Terminée">Terminée</option>
                 <option value="Annulée">Annulée</option>
               </select>
+              {errors.statut ? <p className="text-xs text-red-600">{errors.statut.message}</p> : null}
+            </label>
+            <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
+              Résultat (optionnel)
+              <input
+                type="text"
+                className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                {...register('resultat')}
+              />
             </label>
           </div>
-
-          <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
-            Résultat (optionnel)
-            <input
-              type="text"
-              className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-              {...register('result')}
-            />
-          </label>
 
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:justify-end">
             <button
@@ -537,7 +585,7 @@ export function CompetitionsPage() {
         title="Supprimer la compétition"
         description={
           deleteCandidate
-            ? `Voulez-vous vraiment supprimer ${deleteCandidate.competition_name} ? Cette action est irréversible.`
+            ? `Voulez-vous vraiment supprimer ${deleteCandidate.nom_competition} ? Cette action est irréversible.`
             : ''
         }
         onCancel={() => setDeleteCandidate(null)}

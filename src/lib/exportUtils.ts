@@ -6,19 +6,38 @@ import type { CompetitionRecord } from '../types/competition'
 const formatDate = (value: string) => new Date(value).toLocaleDateString('fr-FR')
 const formatTime = (value: string) => new Date(value).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 
+function getParticipantName(record: CompetitionRecord): string {
+  if (record.type_participant === 'athlète' && record.athletes) {
+    return `${record.athletes.prenom} ${record.athletes.nom}`
+  }
+  if (record.type_participant === 'équipe' && record.equipes) {
+    return record.equipes.nom
+  }
+  if (record.type_participant === 'officiel' && record.officiels) {
+    return `${record.officiels.prenom} ${record.officiels.nom}`
+  }
+  return '—'
+}
+
+function getSportName(record: CompetitionRecord): string {
+  if (record.sports) {
+    return record.sports.nom
+  }
+  return '—'
+}
+
 export function exportCompetitionsToExcel(records: CompetitionRecord[]) {
   const rows = records.map((record) => ({
-    Participant: record.participant_name,
-    Type: record.participant_type,
-    Sport: record.sport_type,
-    Discipline: record.discipline,
-    Compétition: record.competition_name,
-    Date: formatDate(record.competition_datetime),
-    Heure: formatTime(record.competition_datetime),
-    Lieu: record.location,
-    Étape: record.stage,
-    Statut: record.status,
-    Résultat: record.result ?? ''
+    Participant: getParticipantName(record),
+    Type: record.type_participant,
+    Sport: getSportName(record),
+    Compétition: record.nom_competition,
+    Date: formatDate(record.date_heure),
+    Heure: formatTime(record.date_heure),
+    Lieu: record.lieu,
+    Étape: record.etape,
+    Statut: record.statut,
+    Résultat: record.resultat ?? ''
   }))
 
   const worksheet = XLSX.utils.json_to_sheet(rows)
@@ -35,17 +54,16 @@ export function exportCompetitionsToPdf(records: CompetitionRecord[]) {
   doc.text(title, 14, 20)
 
   const body = records.map((record) => [
-    record.participant_name,
-    record.participant_type,
-    record.sport_type,
-    record.discipline,
-    record.competition_name,
-    formatDate(record.competition_datetime),
-    formatTime(record.competition_datetime),
-    record.location,
-    record.stage,
-    record.status,
-    record.result ?? ''
+    getParticipantName(record),
+    record.type_participant,
+    getSportName(record),
+    record.nom_competition,
+    formatDate(record.date_heure),
+    formatTime(record.date_heure),
+    record.lieu,
+    record.etape,
+    record.statut,
+    record.resultat ?? ''
   ])
 
   autoTable(doc, {
@@ -54,7 +72,6 @@ export function exportCompetitionsToPdf(records: CompetitionRecord[]) {
       'Participant',
       'Type',
       'Sport',
-      'Discipline',
       'Compétition',
       'Date',
       'Heure',

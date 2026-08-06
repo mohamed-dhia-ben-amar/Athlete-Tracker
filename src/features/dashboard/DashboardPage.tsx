@@ -3,29 +3,35 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../auth/useAuth'
 import { AppShell } from '../layout/AppShell'
 import { fetchCompetitions } from '../../services/competitionService'
+import { fetchAthletes } from '../../services/athleteService'
+import { fetchTeams } from '../../services/teamService'
 import type { CompetitionRecord } from '../../types/competition'
 import { CompetitionTable } from './CompetitionTable'
 
 function countToday(records: CompetitionRecord[]) {
   const today = new Date().toLocaleDateString('fr-FR')
   return records.filter((record) => {
-    return new Date(record.competition_datetime).toLocaleDateString('fr-FR') === today
+    return new Date(record.date_heure).toLocaleDateString('fr-FR') === today
   }).length
 }
 
 export function DashboardPage() {
   const auth = useAuth()
   const greeting = useMemo(() => auth.user?.email ?? 'utilisateur', [auth.user])
-  const { data = [], isLoading, isError } = useQuery(['competitions'], fetchCompetitions)
+  const { data: competitions = [], isLoading, isError } = useQuery(['competitions'], fetchCompetitions)
+  const { data: athletes = [] } = useQuery(['athletes'], fetchAthletes)
+  const { data: teams = [] } = useQuery(['teams'], fetchTeams)
 
   const statistics = useMemo(
     () => [
-      { label: 'Compétitions totales', value: data.length.toString() },
-      { label: 'Aujourd’hui', value: countToday(data).toString() },
-      { label: 'À venir', value: data.filter((item) => item.status === 'À venir').length.toString() },
-      { label: 'Terminées', value: data.filter((item) => item.status === 'Terminée').length.toString() }
+      { label: 'Compétitions totales', value: competitions.length.toString() },
+      { label: "Aujourd'hui", value: countToday(competitions).toString() },
+      { label: 'À venir', value: competitions.filter((item) => item.statut === 'À venir').length.toString() },
+      { label: 'Terminées', value: competitions.filter((item) => item.statut === 'Terminée').length.toString() },
+      { label: 'Nombre d\'athlètes', value: athletes.length.toString() },
+      { label: 'Nombre d\'équipes', value: teams.length.toString() }
     ],
-    [data]
+    [competitions, athletes, teams]
   )
 
   return (
@@ -33,7 +39,7 @@ export function DashboardPage() {
       title="Tableau de bord"
       description="Suivez les performances, l’activité et les compétitions à venir."
     >
-      <section className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-6">
         {statistics.map((item) => (
           <div
             key={item.label}
@@ -56,7 +62,7 @@ export function DashboardPage() {
           </div>
         </div>
 
-        <CompetitionTable records={data} isLoading={isLoading} isError={isError} />
+        <CompetitionTable records={competitions} isLoading={isLoading} isError={isError} />
       </section>
     </AppShell>
   )
