@@ -1,4 +1,3 @@
-import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import type { CompetitionRecord } from '../types/competition'
@@ -24,28 +23,6 @@ function getSportName(record: CompetitionRecord): string {
     return record.sports.nom
   }
   return '—'
-}
-
-export function exportCompetitionsToExcel(records: CompetitionRecord[]) {
-  const rows = records.map((record) => ({
-    Participant: getParticipantName(record),
-    Type: record.type_participant,
-    Sport: getSportName(record),
-    Compétition: record.nom_competition,
-    Date: formatDate(record.date_heure),
-    Heure: formatTime(record.date_heure),
-    Lieu: record.lieu,
-    Étape: record.etape,
-    Statut: record.statut,
-    Résultat: record.resultat ?? '',
-    Adversaire: record.adversaire ?? ''
-  }))
-
-  const worksheet = XLSX.utils.json_to_sheet(rows)
-  const workbook = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Compétitions')
-
-  XLSX.writeFile(workbook, `competitions-${new Date().toISOString().slice(0, 10)}.xlsx`)
 }
 
 export function exportCompetitionsToPdf(records: CompetitionRecord[]) {

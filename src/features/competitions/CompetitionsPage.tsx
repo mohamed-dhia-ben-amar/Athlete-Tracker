@@ -21,10 +21,6 @@ import { fetchAthletes } from '../../services/athleteService'
 import { fetchTeams } from '../../services/teamService'
 import { CompetitionTable } from '../dashboard/CompetitionTable'
 
-function lazyExportToExcel(records: CompetitionRecord[]) {
-  return import('../../lib/exportUtils').then((mod) => mod.exportCompetitionsToExcel(records))
-}
-
 function lazyExportToPdf(records: CompetitionRecord[]) {
   return import('../../lib/exportUtils').then((mod) => mod.exportCompetitionsToPdf(records))
 }
@@ -51,7 +47,6 @@ export function CompetitionsPage() {
   const [statusFilter, setStatusFilter] = useState('')
   const [stageFilter, setStageFilter] = useState('')
   const [sportFilter, setSportFilter] = useState('')
-  const [exportingExcel, setExportingExcel] = useState(false)
   const [exportingPdf, setExportingPdf] = useState(false)
 
   const addToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
@@ -197,18 +192,6 @@ export function CompetitionsPage() {
     setDeleteCandidate(record)
   }
 
-  const handleExportExcel = async () => {
-    try {
-      setExportingExcel(true)
-      await lazyExportToExcel(filteredCompetitions)
-      addToast('Export Excel réussi.', 'success')
-    } catch {
-      addToast('Erreur lors de l\'export Excel.', 'error')
-    } finally {
-      setExportingExcel(false)
-    }
-  }
-
   const handleExportPdf = async () => {
     try {
       setExportingPdf(true)
@@ -253,16 +236,6 @@ export function CompetitionsPage() {
           <h1 className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100 sm:mt-2 sm:text-3xl">Compétitions</h1>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-3">
-          <button
-            type="button"
-            onClick={handleExportExcel}
-            disabled={exportingExcel || isLoading}
-            aria-label="Exporter les compétitions au format Excel"
-            className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-900 sm:w-auto sm:px-4 sm:py-3 sm:text-sm"
-          >
-            {exportingExcel && <Spinner size="sm" className="text-slate-700 dark:text-slate-100" />}
-            Exporter Excel
-          </button>
           <button
             type="button"
             onClick={handleExportPdf}

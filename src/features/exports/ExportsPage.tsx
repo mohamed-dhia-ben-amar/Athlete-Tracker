@@ -4,7 +4,7 @@ export function ExportsPage() {
   return (
     <AppShell
       title="Exports"
-      description="Exportez vos données sportives au format PDF ou Excel avec les filtres actifs."
+      description="Exportez vos données sportives au format PDF avec les filtres actifs."
     >
       <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-slate-700 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
         <h2 className="text-xl font-semibold">Page des exports</h2>
