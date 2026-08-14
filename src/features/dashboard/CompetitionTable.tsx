@@ -65,7 +65,8 @@ export function CompetitionTable({ records, isLoading, isError, onEdit, onDelete
           cell: (info) => new Date(info.getValue() as string).toLocaleDateString('fr-FR')
         },
         { header: 'Étape', accessorKey: 'etape' },
-        { header: 'Statut', accessorKey: 'statut' }
+        { header: 'Statut', accessorKey: 'statut' },
+        { header: 'Adversaire', accessorKey: 'adversaire' }
       ]
 
       if (onEdit || onDelete) {
@@ -205,6 +206,13 @@ export function CompetitionTable({ records, isLoading, isError, onEdit, onDelete
                   <div>
                     <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Résultat</p>
                     <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{r.resultat}</p>
+                  </div>
+                )}
+
+                {r.adversaire && (
+                  <div>
+                    <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Adversaire</p>
+                    <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{r.adversaire}</p>
                   </div>
                 )}
 

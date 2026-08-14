@@ -37,7 +37,8 @@ export function exportCompetitionsToExcel(records: CompetitionRecord[]) {
     Lieu: record.lieu,
     Étape: record.etape,
     Statut: record.statut,
-    Résultat: record.resultat ?? ''
+    Résultat: record.resultat ?? '',
+    Adversaire: record.adversaire ?? ''
   }))
 
   const worksheet = XLSX.utils.json_to_sheet(rows)
@@ -63,7 +64,8 @@ export function exportCompetitionsToPdf(records: CompetitionRecord[]) {
     record.lieu,
     record.etape,
     record.statut,
-    record.resultat ?? ''
+    record.resultat ?? '',
+    record.adversaire ?? ''
   ])
 
   autoTable(doc, {
@@ -78,7 +80,8 @@ export function exportCompetitionsToPdf(records: CompetitionRecord[]) {
       'Lieu',
       'Étape',
       'Statut',
-      'Résultat'
+      'Résultat',
+      'Adversaire'
     ]],
     body,
     styles: { fontSize: 8, cellPadding: 3 },
