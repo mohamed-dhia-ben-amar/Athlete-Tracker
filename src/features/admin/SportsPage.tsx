@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
+import { useAuth } from '../auth/useAuth'
 import { AppShell } from '../layout/AppShell'
 import { Modal } from '../../components/Modal'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
@@ -21,6 +22,7 @@ type SportFormValues = z.infer<typeof sportSchema>
 
 export function SportsPage() {
   const queryClient = useQueryClient()
+  const auth = useAuth()
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedSport, setSelectedSport] = useState<SportRecord | null>(null)
   const [deleteCandidate, setDeleteCandidate] = useState<SportRecord | null>(null)
@@ -101,11 +103,16 @@ export function SportsPage() {
   }
 
   const onSubmit = async (values: SportFormValues) => {
+    if (!auth.user?.id) {
+      addToast("Impossible de récupérer l'utilisateur connecté.", 'error')
+      return
+    }
+
     if (selectedSport) {
       await updateMutation.mutateAsync({ id: selectedSport.id, ...values })
       return
     }
-    await createMutation.mutateAsync(values)
+    await createMutation.mutateAsync({ ...values, created_by: auth.user.id })
   }
 
   const actionLabel = selectedSport ? 'Modifier le sport' : 'Créer le sport'

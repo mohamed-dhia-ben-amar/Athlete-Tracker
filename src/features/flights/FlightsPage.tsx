@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
+import { useAuth } from '../auth/useAuth'
 import { AppShell } from '../layout/AppShell'
 import { Modal } from '../../components/Modal'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
@@ -34,6 +35,7 @@ type FlightFormValues = z.infer<typeof flightSchema>
 
 export function FlightsPage() {
   const queryClient = useQueryClient()
+  const auth = useAuth()
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedFlight, setSelectedFlight] = useState<FlightRecord | null>(null)
   const [deleteCandidate, setDeleteCandidate] = useState<FlightRecord | null>(null)
@@ -189,11 +191,16 @@ export function FlightsPage() {
   }
 
   const onSubmit = async (values: FlightFormValues) => {
+    if (!auth.user?.id) {
+      addToast("Impossible de récupérer l'utilisateur connecté.", 'error')
+      return
+    }
+
     if (selectedFlight) {
       await updateMutation.mutateAsync({ id: selectedFlight.id, ...values })
       return
     }
-    await createMutation.mutateAsync(values)
+    await createMutation.mutateAsync({ ...values, created_by: auth.user.id })
   }
 
   const actionLabel = selectedFlight ? 'Modifier le vol' : 'Créer le vol'

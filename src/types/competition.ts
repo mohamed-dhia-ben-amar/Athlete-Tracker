@@ -144,8 +144,10 @@ export interface TimelineEvent {
   detail: string
 }
 
-export type SportRecordInsert = Omit<SportRecord, 'id' | 'created_at' | 'updated_at'>
-export type SportRecordUpdate = Partial<Omit<SportRecord, 'created_at' | 'updated_at'>> & {
+export type SportRecordInsert = Omit<SportRecord, 'id' | 'created_at' | 'updated_at'> & {
+  created_by: string
+}
+export type SportRecordUpdate = Partial<Omit<SportRecord, 'created_at' | 'updated_at' | 'created_by'>> & {
   id: string
 }
 
@@ -155,9 +157,10 @@ export interface AthleteRecordInsert {
   sexe: 'Masculin' | 'Féminin'
   nationalite: string
   sport_id: string
+  created_by: string
 }
 
-export interface AthleteRecordUpdate extends Partial<Omit<AthleteRecord, 'created_at' | 'updated_at'>> {
+export interface AthleteRecordUpdate extends Partial<Omit<AthleteRecord, 'created_at' | 'updated_at' | 'created_by'>> {
   id: string
 }
 
@@ -183,9 +186,10 @@ export interface OfficialRecordInsert {
   telephone?: string | null
   email?: string | null
   actif?: boolean
+  created_by: string
 }
 
-export interface OfficialRecordUpdate extends Partial<Omit<OfficialRecord, 'created_at' | 'updated_at'>> {
+export interface OfficialRecordUpdate extends Partial<Omit<OfficialRecord, 'created_at' | 'updated_at' | 'created_by'>> {
   id: string
 }
 
@@ -203,9 +207,10 @@ export interface FlightRecordInsert {
   reference_reservation?: string | null
   numero_siege?: string | null
   remarques?: string | null
+  created_by: string
 }
 
-export interface FlightRecordUpdate extends Partial<Omit<FlightRecord, 'created_at'>> {
+export interface FlightRecordUpdate extends Partial<Omit<FlightRecord, 'created_at' | 'created_by'>> {
   id: string
 }
 
@@ -222,8 +227,9 @@ export interface AccommodationRecordInsert {
   date_depart: string
   numero_chambre?: string | null
   remarques?: string | null
+  created_by: string
 }
 
-export interface AccommodationRecordUpdate extends Partial<Omit<AccommodationRecord, 'created_at'>> {
+export interface AccommodationRecordUpdate extends Partial<Omit<AccommodationRecord, 'created_at' | 'created_by'>> {
   id: string
 }

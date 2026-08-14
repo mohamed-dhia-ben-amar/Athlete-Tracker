@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
+import { useAuth } from '../auth/useAuth'
 import { AppShell } from '../layout/AppShell'
 import { Modal } from '../../components/Modal'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
@@ -26,6 +27,7 @@ type OfficialFormValues = z.infer<typeof officialSchema>
 
 export function OfficialsPage() {
   const queryClient = useQueryClient()
+  const auth = useAuth()
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedOfficial, setSelectedOfficial] = useState<OfficialRecord | null>(null)
   const [deleteCandidate, setDeleteCandidate] = useState<OfficialRecord | null>(null)
@@ -116,11 +118,16 @@ export function OfficialsPage() {
   }
 
   const onSubmit = async (values: OfficialFormValues) => {
+    if (!auth.user?.id) {
+      addToast("Impossible de récupérer l'utilisateur connecté.", 'error')
+      return
+    }
+
     if (selectedOfficial) {
       await updateMutation.mutateAsync({ id: selectedOfficial.id, ...values })
       return
     }
-    await createMutation.mutateAsync(values)
+    await createMutation.mutateAsync({ ...values, created_by: auth.user.id })
   }
 
   const actionLabel = selectedOfficial ? 'Modifier l\'officiel' : 'Créer l\'officiel'

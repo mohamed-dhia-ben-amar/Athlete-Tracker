@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
+import { useAuth } from '../auth/useAuth'
 import { AppShell } from '../layout/AppShell'
 import { Modal } from '../../components/Modal'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
@@ -33,6 +34,7 @@ type AccommodationFormValues = z.infer<typeof accommodationSchema>
 
 export function AccommodationsPage() {
   const queryClient = useQueryClient()
+  const auth = useAuth()
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedAccommodation, setSelectedAccommodation] = useState<AccommodationRecord | null>(null)
   const [deleteCandidate, setDeleteCandidate] = useState<AccommodationRecord | null>(null)
@@ -184,11 +186,16 @@ export function AccommodationsPage() {
   }
 
   const onSubmit = async (values: AccommodationFormValues) => {
+    if (!auth.user?.id) {
+      addToast("Impossible de récupérer l'utilisateur connecté.", 'error')
+      return
+    }
+
     if (selectedAccommodation) {
       await updateMutation.mutateAsync({ id: selectedAccommodation.id, ...values })
       return
     }
-    await createMutation.mutateAsync(values)
+    await createMutation.mutateAsync({ ...values, created_by: auth.user.id })
   }
 
   const actionLabel = selectedAccommodation ? 'Modifier l\'hébergement' : 'Créer l\'hébergement'
