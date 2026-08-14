@@ -167,9 +167,10 @@ export interface TeamRecordInsert {
   categorie: string
   entraineur?: string | null
   actif?: boolean
+  created_by: string
 }
 
-export interface TeamRecordUpdate extends Partial<Omit<TeamRecord, 'created_at' | 'updated_at'>> {
+export interface TeamRecordUpdate extends Partial<Omit<TeamRecord, 'created_at' | 'updated_at' | 'created_by'>> {
   id: string
 }
 

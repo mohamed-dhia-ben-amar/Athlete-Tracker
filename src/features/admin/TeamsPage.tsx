@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
+import { useAuth } from '../auth/useAuth'
 import { AppShell } from '../layout/AppShell'
 import { Modal } from '../../components/Modal'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
@@ -24,6 +25,7 @@ type TeamFormValues = z.infer<typeof teamSchema>
 
 export function TeamsPage() {
   const queryClient = useQueryClient()
+  const auth = useAuth()
   const [modalOpen, setModalOpen] = useState(false)
   const [selectedTeam, setSelectedTeam] = useState<TeamRecord | null>(null)
   const [deleteCandidate, setDeleteCandidate] = useState<TeamRecord | null>(null)
@@ -118,11 +120,16 @@ export function TeamsPage() {
   }
 
   const onSubmit = async (values: TeamFormValues) => {
+    if (!auth.user?.id) {
+      addToast("Impossible de récupérer l'utilisateur connecté.", 'error')
+      return
+    }
+
     if (selectedTeam) {
       await updateMutation.mutateAsync({ id: selectedTeam.id, ...values })
       return
     }
-    await createMutation.mutateAsync(values)
+    await createMutation.mutateAsync({ ...values, created_by: auth.user.id })
   }
 
   const actionLabel = selectedTeam ? 'Modifier l\'équipe' : 'Créer l\'équipe'
