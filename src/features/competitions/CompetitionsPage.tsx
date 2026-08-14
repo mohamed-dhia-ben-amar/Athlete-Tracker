@@ -449,11 +449,6 @@ export function CompetitionsPage() {
                 </select>
                 {errors.equipe_id ? <p className="text-xs text-red-600">{errors.equipe_id.message}</p> : null}
               </label>
-            </div>
-          )}
-
-          {typeParticipant === 'équipe' && (
-            <div className="grid gap-4 sm:grid-cols-2">
               <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
                 Adversaire
                 <input
