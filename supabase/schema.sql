@@ -14,13 +14,8 @@ create table if not exists public.athletes (
   prenom text not null,
   nom text not null,
   sexe text not null check (sexe in ('Masculin', 'Féminin')),
-  date_de_naissance date not null,
   nationalite text not null,
-  numero_passeport text,
-  telephone text,
-  email text,
   sport_id uuid not null references public.sports(id) on delete restrict,
-  actif boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

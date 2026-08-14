@@ -112,7 +112,7 @@ export function AccommodationsPage() {
     setValue('officiel_id', '')
   }, [typeParticipant, setValue])
 
-  const athleteOptions = useMemo(() => athletes.filter((a) => a.actif !== false), [athletes])
+  const athleteOptions = useMemo(() => athletes, [athletes])
   const teamOptions = useMemo(() => teams.filter((t) => t.actif !== false), [teams])
   const officialOptions = useMemo(() => officials.filter((o) => o.actif !== false), [officials])
 

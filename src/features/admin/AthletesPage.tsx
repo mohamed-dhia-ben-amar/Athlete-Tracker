@@ -16,13 +16,8 @@ const athleteSchema = z.object({
   prenom: z.string().min(1, { message: 'Le prénom est requis' }),
   nom: z.string().min(1, { message: 'Le nom est requis' }),
   sexe: z.enum(['Masculin', 'Féminin']),
-  date_de_naissance: z.string().min(1, { message: 'La date de naissance est requise' }),
   nationalite: z.string().min(1, { message: 'La nationalité est requise' }),
-  numero_passeport: z.string().optional(),
-  telephone: z.string().optional(),
-  email: z.string().email({ message: 'Adresse e-mail invalide' }).optional(),
-  sport_id: z.string().min(1, { message: 'Le sport est requis' }),
-  actif: z.boolean().default(true)
+  sport_id: z.string().min(1, { message: 'Le sport est requis' })
 })
 
 type AthleteFormValues = z.infer<typeof athleteSchema>
@@ -83,7 +78,7 @@ export function AthletesPage() {
     formState: { errors, isSubmitting }
   } = useForm<AthleteFormValues>({
     resolver: zodResolver(athleteSchema),
-    defaultValues: { prenom: '', nom: '', sexe: 'Masculin', date_de_naissance: '', nationalite: '', sport_id: sports[0]?.id ?? '', actif: true }
+    defaultValues: { prenom: '', nom: '', sexe: 'Masculin', nationalite: '', sport_id: sports[0]?.id ?? '' }
   })
 
   useEffect(() => {
@@ -96,14 +91,13 @@ export function AthletesPage() {
     const search = searchText.trim().toLowerCase()
     return athletes.filter((athlete) =>
       `${athlete.prenom} ${athlete.nom}`.toLowerCase().includes(search) ||
-      athlete.nationalite.toLowerCase().includes(search) ||
-      (athlete.email ?? '').toLowerCase().includes(search)
+      athlete.nationalite.toLowerCase().includes(search)
     )
   }, [athletes, searchText])
 
   const openNewModal = () => {
     setSelectedAthlete(null)
-    reset({ prenom: '', nom: '', sexe: 'Masculin', date_de_naissance: '', nationalite: '', numero_passeport: '', telephone: '', email: '', sport_id: sports[0]?.id ?? '', actif: true })
+    reset({ prenom: '', nom: '', sexe: 'Masculin', nationalite: '', sport_id: sports[0]?.id ?? '' })
     setModalOpen(true)
   }
 
@@ -113,13 +107,8 @@ export function AthletesPage() {
       prenom: record.prenom,
       nom: record.nom,
       sexe: record.sexe,
-      date_de_naissance: record.date_de_naissance,
       nationalite: record.nationalite,
-      numero_passeport: record.numero_passeport ?? '',
-      telephone: record.telephone ?? '',
-      email: record.email ?? '',
-      sport_id: record.sport_id,
-      actif: record.actif
+      sport_id: record.sport_id
     })
     setModalOpen(true)
   }
@@ -163,7 +152,7 @@ export function AthletesPage() {
             type="search"
             value={searchText}
             onChange={(event) => setSearchText(event.target.value)}
-            placeholder="Rechercher par nom, nationalité ou email"
+            placeholder="Rechercher par nom ou nationalité"
             aria-label="Rechercher un athlète"
             className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-400 sm:px-4 sm:py-3 sm:text-sm"
           />
@@ -244,18 +233,13 @@ export function AthletesPage() {
               </select>
             </label>
             <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
-              Date de naissance
-              <input type="date" className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" {...register('date_de_naissance')} />
-              {errors.date_de_naissance ? <p className="text-xs text-red-600">{errors.date_de_naissance.message}</p> : null}
-            </label>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
               Nationalité
               <input type="text" className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" {...register('nationalite')} />
               {errors.nationalite ? <p className="text-xs text-red-600">{errors.nationalite.message}</p> : null}
             </label>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
             <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
               Sport
               <select className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" {...register('sport_id')}>
@@ -267,23 +251,6 @@ export function AthletesPage() {
               {errors.sport_id ? <p className="text-xs text-red-600">{errors.sport_id.message}</p> : null}
             </label>
           </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
-              Numéro de passeport
-              <input type="text" className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" {...register('numero_passeport')} />
-            </label>
-            <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
-              Téléphone
-              <input type="text" className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" {...register('telephone')} />
-            </label>
-          </div>
-
-          <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
-            Email
-            <input type="email" className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100" {...register('email')} />
-            {errors.email ? <p className="text-xs text-red-600">{errors.email.message}</p> : null}
-          </label>
 
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:justify-end">
             <button

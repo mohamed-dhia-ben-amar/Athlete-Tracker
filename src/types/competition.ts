@@ -23,13 +23,8 @@ export interface AthleteRecord {
   prenom: string
   nom: string
   sexe: 'Masculin' | 'Féminin'
-  date_de_naissance: string
   nationalite: string
-  numero_passeport: string | null
-  telephone: string | null
-  email: string | null
   sport_id: string
-  actif: boolean
   created_at: string
   updated_at: string
 }
@@ -156,13 +151,8 @@ export interface AthleteRecordInsert {
   prenom: string
   nom: string
   sexe: 'Masculin' | 'Féminin'
-  date_de_naissance: string
   nationalite: string
-  numero_passeport?: string | null
-  telephone?: string | null
-  email?: string | null
   sport_id: string
-  actif?: boolean
 }
 
 export interface AthleteRecordUpdate extends Partial<Omit<AthleteRecord, 'created_at' | 'updated_at'>> {
