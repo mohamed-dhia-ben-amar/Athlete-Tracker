@@ -21,7 +21,8 @@ export const competitionSchema = z.object({
     'Autre'
   ]),
   statut: z.enum(['À venir', 'En cours', 'Terminée', 'Annulée']),
-  resultat: z.string().optional()
+  resultat: z.string().optional(),
+  adversaire: z.string().optional()
 })
 
 export type CompetitionFormValues = z.infer<typeof competitionSchema>

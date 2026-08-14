@@ -58,6 +58,7 @@ create table if not exists public.competitions (
   etape text not null check (etape in ('Qualifications','Huitièmes de finale','Quarts de finale','Demi-finales','Finale','Match pour la troisième place','Autre')),
   statut text not null check (statut in ('À venir','En cours','Terminée','Annulée')),
   resultat text,
+  adversaire text,
   created_by uuid not null references auth.users(id) on delete cascade,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()

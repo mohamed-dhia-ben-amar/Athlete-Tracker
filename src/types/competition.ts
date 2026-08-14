@@ -67,6 +67,7 @@ export interface CompetitionRecord {
   etape: CompetitionStage
   statut: CompetitionStatus
   resultat: string | null
+  adversaire: string | null
   created_by: string
   created_at: string
   updated_at: string
@@ -129,6 +130,7 @@ export interface CompetitionRecordInsert {
   etape: CompetitionStage
   statut: CompetitionStatus
   resultat?: string | null
+  adversaire?: string | null
   created_by: string
 }
 export type CompetitionRecordUpdate = Partial<Omit<CompetitionRecord, 'created_by' | 'created_at' | 'updated_at'>> & {

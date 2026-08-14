@@ -19,7 +19,6 @@ import {
 import { fetchSports } from '../../services/sportService'
 import { fetchAthletes } from '../../services/athleteService'
 import { fetchTeams } from '../../services/teamService'
-import { fetchOfficials } from '../../services/officialService'
 import { CompetitionTable } from '../dashboard/CompetitionTable'
 
 function lazyExportToExcel(records: CompetitionRecord[]) {
@@ -38,7 +37,8 @@ const defaultFormValues: CompetitionFormValues = {
   lieu: '',
   etape: 'Qualifications',
   statut: 'À venir',
-  resultat: ''
+  resultat: '',
+  adversaire: ''
 }
 
 export function CompetitionsPage() {
@@ -68,7 +68,6 @@ export function CompetitionsPage() {
   const { data: sports = [] } = useQuery(['sports'], fetchSports)
   const { data: athletes = [] } = useQuery(['athletes'], fetchAthletes)
   const { data: teams = [] } = useQuery(['teams'], fetchTeams)
-  const { data: officials = [] } = useQuery(['officials'], fetchOfficials)
 
   const createMutation = useMutation(createCompetition, {
     onSuccess: () => {
@@ -121,11 +120,6 @@ export function CompetitionsPage() {
   const teamOptions = useMemo(
     () => teams.filter((t) => t.sport_id === sportId),
     [teams, sportId]
-  )
-
-  const officialOptions = useMemo(
-    () => officials.filter((o) => o.actif !== false),
-    [officials]
   )
 
   useEffect(() => {
@@ -184,17 +178,17 @@ export function CompetitionsPage() {
   const openEditModal = (record: CompetitionRecord) => {
     setSelectedCompetition(record)
     reset({
-      type_participant: record.type_participant,
+      type_participant: record.type_participant === 'officiel' ? 'athlète' : record.type_participant,
       sport_id: record.sport_id,
       athlete_id: record.athlete_id ?? '',
       equipe_id: record.equipe_id ?? '',
-      officiel_id: record.officiel_id ?? '',
       nom_competition: record.nom_competition,
       date_heure: record.date_heure.slice(0, 16),
       lieu: record.lieu,
       etape: record.etape,
       statut: record.statut,
-      resultat: record.resultat ?? ''
+      resultat: record.resultat ?? '',
+      adversaire: record.adversaire ?? ''
     })
     setModalOpen(true)
   }
@@ -237,7 +231,6 @@ export function CompetitionsPage() {
       ...values,
       athlete_id: values.athlete_id ?? null,
       equipe_id: values.equipe_id ?? null,
-      officiel_id: values.officiel_id ?? null,
       created_by: auth.user.id
     }
 
@@ -372,7 +365,6 @@ export function CompetitionsPage() {
               <option value="">Tous</option>
               <option value="athlète">Athlète</option>
               <option value="équipe">Équipe</option>
-              <option value="officiel">Officiel</option>
             </select>
           </label>
         </div>
@@ -404,7 +396,6 @@ export function CompetitionsPage() {
               >
                 <option value="athlète">Athlète</option>
                 <option value="équipe">Équipe</option>
-                <option value="officiel">Officiel</option>
               </select>
             </label>
 
@@ -461,22 +452,15 @@ export function CompetitionsPage() {
             </div>
           )}
 
-          {typeParticipant === 'officiel' && (
+          {typeParticipant === 'équipe' && (
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="space-y-2 text-sm text-slate-700 dark:text-slate-200">
-                Officiel
-                <select
+                Adversaire
+                <input
+                  type="text"
                   className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                  {...register('officiel_id')}
-                >
-                  <option value="">Sélectionner un officiel</option>
-                  {officialOptions.map((official) => (
-                    <option key={official.id} value={official.id}>
-                      {official.prenom} {official.nom} — {official.fonction}
-                    </option>
-                  ))}
-                </select>
-                {errors.officiel_id ? <p className="text-xs text-red-600">{errors.officiel_id.message}</p> : null}
+                  {...register('adversaire')}
+                />
               </label>
             </div>
           )}
