@@ -47,6 +47,8 @@ export function CompetitionsPage() {
   const [statusFilter, setStatusFilter] = useState('')
   const [stageFilter, setStageFilter] = useState('')
   const [sportFilter, setSportFilter] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
   const [exportingPdf, setExportingPdf] = useState(false)
 
   const addToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
@@ -140,9 +142,13 @@ export function CompetitionsPage() {
       const matchesStage = !stageFilter || competition.etape === stageFilter
       const matchesSport = !sportFilter || competition.sport_id === sportFilter
 
-      return matchesSearch && matchesStatus && matchesStage && matchesSport
+      const competitionDate = new Date(competition.date_heure)
+      const matchesDateFrom = !dateFrom || competitionDate >= new Date(dateFrom)
+      const matchesDateTo = !dateTo || competitionDate <= new Date(dateTo + 'T23:59:59')
+
+      return matchesSearch && matchesStatus && matchesStage && matchesSport && matchesDateFrom && matchesDateTo
     })
-  }, [competitions, searchText, statusFilter, stageFilter, sportFilter])
+  }, [competitions, searchText, statusFilter, stageFilter, sportFilter, dateFrom, dateTo])
 
   function getParticipantName(record: CompetitionRecord): string {
     if (record.type_participant === 'athlète' && record.athletes) {
@@ -339,6 +345,28 @@ export function CompetitionsPage() {
               <option value="athlète">Athlète</option>
               <option value="équipe">Équipe</option>
             </select>
+          </label>
+          <label htmlFor="date-from-filter" className="space-y-2 text-xs text-slate-700 dark:text-slate-200 sm:text-sm">
+            Date début
+            <input
+              id="date-from-filter"
+              type="date"
+              value={dateFrom}
+              onChange={(event) => setDateFrom(event.target.value)}
+              aria-label="Filtrer par date de début"
+              className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 sm:px-4 sm:py-3 sm:text-sm"
+            />
+          </label>
+          <label htmlFor="date-to-filter" className="space-y-2 text-xs text-slate-700 dark:text-slate-200 sm:text-sm">
+            Date fin
+            <input
+              id="date-to-filter"
+              type="date"
+              value={dateTo}
+              onChange={(event) => setDateTo(event.target.value)}
+              aria-label="Filtrer par date de fin"
+              className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-900 outline-none dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 sm:px-4 sm:py-3 sm:text-sm"
+            />
           </label>
         </div>
       </div>
