@@ -48,7 +48,10 @@ export function exportCompetitionsToPdf(records: CompetitionRecord[]) {
 
   for (const day of sortedDays) {
     const dayRecords = groupedByDay.get(day)!
-    dayRecords.sort((a, b) => {
+    const athleteRecords = dayRecords.filter((r) => r.type_participant === 'athlète')
+    const teamRecords = dayRecords.filter((r) => r.type_participant === 'équipe')
+
+    const sortFn = (a: CompetitionRecord, b: CompetitionRecord) => {
       const nameA = getParticipantName(a)
       const nameB = getParticipantName(b)
       if (nameA !== nameB) return nameA.localeCompare(nameB)
@@ -56,7 +59,9 @@ export function exportCompetitionsToPdf(records: CompetitionRecord[]) {
       const sportB = getSportName(b)
       if (sportA !== sportB) return sportA.localeCompare(sportB)
       return new Date(a.date_heure).getTime() - new Date(b.date_heure).getTime()
-    })
+    }
+    athleteRecords.sort(sortFn)
+    teamRecords.sort(sortFn)
 
     const [year, month, date] = day.split('-')
     const dateObj = new Date(Number(year), Number(month) - 1, Number(date))
@@ -72,29 +77,48 @@ export function exportCompetitionsToPdf(records: CompetitionRecord[]) {
     doc.text(dayLabel.charAt(0).toUpperCase() + dayLabel.slice(1), 14, currentY)
     currentY += 6
 
-    const body = dayRecords.map((record) => [
-      record.nom_competition,
-      formatTime(record.date_heure),
-      record.lieu,
-      record.etape,
-      getSportName(record),
-      getParticipantName(record),
-      record.adversaire ?? '',
-      record.statut,
-      record.resultat ?? ''
-    ])
+    const renderGroup = (records: CompetitionRecord[], label: string) => {
+      if (records.length === 0) return
 
-    autoTable(doc, {
-      startY: currentY,
-      head: [['Compétition', 'Heure', 'Lieu', 'Étape', 'Sport', 'Participant', 'Adversaire', 'Statut', 'Résultat']],
-      body,
-      styles: { fontSize: 7, cellPadding: 2 },
-      headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontSize: 8 },
-      alternateRowStyles: { fillColor: [243, 244, 246] },
-      margin: { left: 14, right: 14 }
-    })
+      if (currentY > 250) {
+        doc.addPage()
+        currentY = 20
+      }
 
-    currentY = doc.lastAutoTable.finalY + 10
+      doc.setFontSize(10)
+      doc.setFont(undefined, 'bold')
+      doc.text(label, 14, currentY)
+      currentY += 5
+
+      const body = records.map((record) => [
+        record.nom_competition,
+        formatTime(record.date_heure),
+        record.lieu,
+        record.etape,
+        getSportName(record),
+        getParticipantName(record),
+        record.adversaire ?? '',
+        record.statut,
+        record.resultat ?? ''
+      ])
+
+      autoTable(doc, {
+        startY: currentY,
+        head: [['Compétition', 'Heure', 'Lieu', 'Étape', 'Sport', 'Participant', 'Adversaire', 'Statut', 'Résultat']],
+        body,
+        styles: { fontSize: 7, cellPadding: 2 },
+        headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontSize: 8 },
+        alternateRowStyles: { fillColor: [243, 244, 246] },
+        margin: { left: 14, right: 14 }
+      })
+
+      currentY = doc.lastAutoTable.finalY + 8
+    }
+
+    renderGroup(athleteRecords, 'Athlètes')
+    renderGroup(teamRecords, 'Équipes')
+
+    currentY += 4
 
     if (currentY > 250) {
       doc.addPage()
