@@ -2,8 +2,8 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import type { CompetitionRecord } from '../types/competition'
 
-const formatDate = (value: string) => new Date(value).toLocaleDateString('fr-FR')
-const formatTime = (value: string) => new Date(value).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+const formatDate = (value: string) => new Date(value).toLocaleDateString('fr-FR', { timeZone: 'UTC' })
+const formatTime = (value: string) => new Date(value).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
 
 function getParticipantName(record: CompetitionRecord): string {
   if (record.type_participant === 'athlète' && record.athletes) {
