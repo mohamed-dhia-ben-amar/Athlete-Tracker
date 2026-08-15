@@ -216,6 +216,11 @@ export function CompetitionsPage() {
       return
     }
 
+    if (!values.sport_id) {
+      addToast('Le sport est requis.', 'error')
+      return
+    }
+
     const payload = {
       ...values,
       athlete_id: values.athlete_id ?? null,
