@@ -5,6 +5,49 @@ import type { CompetitionRecord } from '../types/competition'
 const formatDate = (value: string) => new Date(value).toLocaleDateString('fr-FR', { timeZone: 'UTC' })
 const formatTime = (value: string) => new Date(value).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
 
+// ---- Shared design tokens -------------------------------------------------
+const COLORS = {
+  primary: [79, 70, 229] as [number, number, number],      // indigo-600
+  primaryDark: [55, 48, 163] as [number, number, number],  // indigo-800
+  slateDark: [30, 41, 59] as [number, number, number],     // slate-800
+  slateMid: [100, 116, 139] as [number, number, number],   // slate-500
+  slateLight: [148, 163, 184] as [number, number, number], // slate-400
+  rowAlt: [245, 247, 251] as [number, number, number],     // slate-50/indigo tint
+  border: [226, 232, 240] as [number, number, number],     // slate-200
+  chipBg: [238, 242, 255] as [number, number, number],     // indigo-50
+  white: [255, 255, 255] as [number, number, number]
+}
+
+function drawHeaderBand(doc: jsPDF, title: string, subtitle?: string) {
+  const pageWidth = doc.internal.pageSize.getWidth()
+  doc.setFillColor(...COLORS.primary)
+  doc.rect(0, 0, pageWidth, 22, 'F')
+  doc.setTextColor(...COLORS.white)
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(15)
+  doc.text(title, 14, 14)
+  if (subtitle) {
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9)
+    doc.text(subtitle, pageWidth - 14, 14, { align: 'right' })
+  }
+  doc.setTextColor(0, 0, 0)
+}
+
+function drawSectionChip(doc: jsPDF, label: string, x: number, y: number) {
+  doc.setFontSize(9)
+  const textWidth = doc.getTextWidth(label)
+  const paddingX = 3
+  const chipWidth = textWidth + paddingX * 2
+  const chipHeight = 6
+  doc.setFillColor(...COLORS.chipBg)
+  doc.roundedRect(x, y - chipHeight + 1.5, chipWidth, chipHeight, 1.2, 1.2, 'F')
+  doc.setTextColor(...COLORS.primaryDark)
+  doc.setFont('helvetica', 'bold')
+  doc.text(label, x + paddingX, y)
+  doc.setTextColor(0, 0, 0)
+}
+
 function getParticipantName(record: CompetitionRecord): string {
   if (record.type_participant === 'athlète' && record.athletes) {
     return `${record.athletes.prenom} ${record.athletes.nom}`
@@ -27,9 +70,25 @@ function getSportName(record: CompetitionRecord): string {
 
 export function exportCompetitionsToPdf(records: CompetitionRecord[]) {
   const doc = new jsPDF({ orientation: 'portrait' })
-  const title = 'Export des compétitions'
-  doc.setFontSize(14)
-  doc.text(title, 14, 20)
+  const pageWidth = doc.internal.pageSize.getWidth()
+  const pageHeight = doc.internal.pageSize.getHeight()
+  const footerHeight = 8
+
+  const generatedOn = new Date().toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  })
+
+  drawHeaderBand(doc, 'Export des compétitions', `Généré le ${generatedOn}`)
+
+  const drawFooter = (pageNumber: number, totalPages: number) => {
+    doc.setFontSize(8)
+    doc.setTextColor(...COLORS.slateLight)
+    doc.text('Export des compétitions', 14, pageHeight - footerHeight)
+    doc.text(`Page ${pageNumber} / ${totalPages}`, pageWidth - 14, pageHeight - footerHeight, { align: 'right' })
+    doc.setTextColor(0, 0, 0)
+  }
 
   const validRecords = records.filter((record) => record.date_heure)
 
@@ -44,7 +103,7 @@ export function exportCompetitionsToPdf(records: CompetitionRecord[]) {
   }
 
   const sortedDays = Array.from(groupedByDay.keys()).sort()
-  let currentY = 28
+  let currentY = 34
 
   for (const day of sortedDays) {
     const dayRecords = groupedByDay.get(day)!
@@ -72,10 +131,18 @@ export function exportCompetitionsToPdf(records: CompetitionRecord[]) {
       day: 'numeric'
     })
 
-    doc.setFontSize(11)
+    // Day header with accent underline
+    doc.setFontSize(12)
     doc.setFont('helvetica', 'bold')
-    doc.text(dayLabel.charAt(0).toUpperCase() + dayLabel.slice(1), 14, currentY)
-    currentY += 6
+    doc.setTextColor(...COLORS.slateDark)
+    const dayText = dayLabel.charAt(0).toUpperCase() + dayLabel.slice(1)
+    doc.text(dayText, 14, currentY)
+    const textWidth = doc.getTextWidth(dayText)
+    doc.setDrawColor(...COLORS.primary)
+    doc.setLineWidth(0.8)
+    doc.line(14, currentY + 1.5, 14 + textWidth, currentY + 1.5)
+    doc.setTextColor(0, 0, 0)
+    currentY += 8
 
     const renderGroup = (records: CompetitionRecord[], label: string) => {
       if (records.length === 0) return
@@ -85,10 +152,8 @@ export function exportCompetitionsToPdf(records: CompetitionRecord[]) {
         currentY = 20
       }
 
-      doc.setFontSize(10)
-      doc.setFont('helvetica', 'bold')
-      doc.text(label, 14, currentY)
-      currentY += 5
+      drawSectionChip(doc, label, 14, currentY)
+      currentY += 6
 
       const body = records.map((record) => [
         record.nom_competition,
@@ -106,18 +171,25 @@ export function exportCompetitionsToPdf(records: CompetitionRecord[]) {
         startY: currentY,
         head: [['Compétition', 'Heure', 'Lieu', 'Étape', 'Sport', 'Participant', 'Adversaire', 'Statut', 'Résultat']],
         body,
-        styles: { fontSize: 7, cellPadding: 2 },
-        headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontSize: 8 },
-        alternateRowStyles: { fillColor: [243, 244, 246] },
-        margin: { left: 14, right: 14 }
+        styles: { fontSize: 7, cellPadding: 2.2, textColor: [30, 41, 59], lineColor: COLORS.border, lineWidth: 0.1 },
+        headStyles: {
+          fillColor: COLORS.slateDark,
+          textColor: COLORS.white,
+          fontSize: 7.5,
+          fontStyle: 'bold',
+          halign: 'left'
+        },
+        alternateRowStyles: { fillColor: COLORS.rowAlt },
+        margin: { left: 14, right: 14 },
+        theme: 'grid'
       })
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       currentY = (doc as any).lastAutoTable.finalY + 8
     }
 
-    renderGroup(athleteRecords, 'Athlètes')
-    renderGroup(teamRecords, 'Équipes')
+    renderGroup(athleteRecords, 'ATHLÈTES')
+    renderGroup(teamRecords, 'ÉQUIPES')
 
     currentY += 4
 
@@ -125,6 +197,12 @@ export function exportCompetitionsToPdf(records: CompetitionRecord[]) {
       doc.addPage()
       currentY = 20
     }
+  }
+
+  const pageCount = doc.getNumberOfPages()
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i)
+    drawFooter(i, pageCount)
   }
 
   doc.save(`competitions-${new Date().toISOString().slice(0, 10)}.pdf`)
@@ -154,20 +232,29 @@ export function exportTimelineToPdf(
     accommodation: 'Hébergement'
   }
 
-  const drawFooter = () => {
+  const typeChipColors: Record<string, [number, number, number]> = {
+    competition: [79, 70, 229],   // indigo
+    flight: [14, 165, 233],       // sky
+    accommodation: [16, 185, 129] // emerald
+  }
+
+  drawHeaderBand(doc, `Chronologie — ${participantName}`, participantType)
+
+  const drawFooter = (pageNumber: number) => {
     doc.setFontSize(8)
-    doc.setTextColor(148, 163, 184)
+    doc.setTextColor(...COLORS.slateLight)
     doc.text(
       `Chronologie — ${participantName}`,
       margin,
       pageHeight - footerHeight
     )
     doc.text(
-      `Page ${doc.getNumberOfPages()}`,
+      `Page ${pageNumber}`,
       pageWidth - margin,
       pageHeight - footerHeight,
       { align: 'right' }
     )
+    doc.setTextColor(0, 0, 0)
   }
 
   const body = events.map((event) => [
@@ -178,17 +265,29 @@ export function exportTimelineToPdf(
   ])
 
   autoTable(doc, {
-    startY: 20,
+    startY: 28,
     head: [['Date', 'Type', 'Événement', 'Détails']],
     body,
-    styles: { fontSize: 9, cellPadding: 4 },
-    headStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
-    alternateRowStyles: { fillColor: [248, 250, 252] },
+    styles: { fontSize: 9, cellPadding: 4, textColor: [30, 41, 59] },
+    headStyles: { fillColor: COLORS.slateDark, textColor: COLORS.white, fontSize: 10, fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: COLORS.rowAlt },
     margin: { left: margin, right: margin, bottom: footerHeight + 4 },
-    tableLineColor: [226, 232, 240],
+    tableLineColor: COLORS.border,
     tableLineWidth: 0.1,
-    didDrawPage: (_data: unknown) => {
-      drawFooter()
+    theme: 'grid',
+    didParseCell: (data) => {
+      // Colorize the "Type" column as a subtle tag-like accent
+      if (data.section === 'body' && data.column.index === 1) {
+        const rawType = events[data.row.index]?.type
+        const color = rawType ? typeChipColors[rawType] : undefined
+        if (color) {
+          data.cell.styles.textColor = color
+          data.cell.styles.fontStyle = 'bold'
+        }
+      }
+    },
+    didDrawPage: (data) => {
+      drawFooter(data.pageNumber)
     },
     pageBreak: 'auto'
   })
