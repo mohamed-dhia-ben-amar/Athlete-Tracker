@@ -73,20 +73,20 @@ export function exportCompetitionsToPdf(records: CompetitionRecord[]) {
     currentY += 6
 
     const body = dayRecords.map((record) => [
-      formatTime(record.date_heure),
-      getParticipantName(record),
-      getSportName(record),
       record.nom_competition,
+      formatTime(record.date_heure),
       record.lieu,
       record.etape,
+      getSportName(record),
+      getParticipantName(record),
+      record.adversaire ?? '',
       record.statut,
-      record.resultat ?? '',
-      record.adversaire ?? ''
+      record.resultat ?? ''
     ])
 
     autoTable(doc, {
       startY: currentY,
-      head: [['Heure', 'Participant', 'Sport', 'Compétition', 'Lieu', 'Étape', 'Statut', 'Résultat', 'Adversaire']],
+      head: [['Compétition', 'Heure', 'Lieu', 'Étape', 'Sport', 'Participant', 'Adversaire', 'Statut', 'Résultat']],
       body,
       styles: { fontSize: 7, cellPadding: 2 },
       headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontSize: 8 },
