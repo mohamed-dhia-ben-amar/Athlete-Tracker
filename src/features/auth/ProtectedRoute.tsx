@@ -1,7 +1,8 @@
 import { Navigate, useLocation } from 'react-router-dom'
+import React from 'react'
 import { useAuth } from './useAuth'
 
-export function ProtectedRoute({ children }: { children: JSX.Element }) {
+export function ProtectedRoute({ children }: { children: React.ReactElement }) {
   const auth = useAuth()
   const location = useLocation()
 

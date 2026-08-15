@@ -73,7 +73,7 @@ export function exportCompetitionsToPdf(records: CompetitionRecord[]) {
     })
 
     doc.setFontSize(11)
-    doc.setFont(undefined, 'bold')
+    doc.setFont('helvetica', 'bold')
     doc.text(dayLabel.charAt(0).toUpperCase() + dayLabel.slice(1), 14, currentY)
     currentY += 6
 
@@ -86,7 +86,7 @@ export function exportCompetitionsToPdf(records: CompetitionRecord[]) {
       }
 
       doc.setFontSize(10)
-      doc.setFont(undefined, 'bold')
+      doc.setFont('helvetica', 'bold')
       doc.text(label, 14, currentY)
       currentY += 5
 
@@ -112,7 +112,8 @@ export function exportCompetitionsToPdf(records: CompetitionRecord[]) {
         margin: { left: 14, right: 14 }
       })
 
-      currentY = doc.lastAutoTable.finalY + 8
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      currentY = (doc as any).lastAutoTable.finalY + 8
     }
 
     renderGroup(athleteRecords, 'Athlètes')
