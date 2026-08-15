@@ -223,8 +223,8 @@ export function CompetitionsPage() {
 
     const payload = {
       ...values,
-      athlete_id: values.athlete_id ?? null,
-      equipe_id: values.equipe_id ?? null,
+      athlete_id: values.athlete_id || null,
+      equipe_id: values.equipe_id || null,
       created_by: auth.user.id
     }
 
