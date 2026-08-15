@@ -26,45 +26,81 @@ function getSportName(record: CompetitionRecord): string {
 }
 
 export function exportCompetitionsToPdf(records: CompetitionRecord[]) {
-  const doc = new jsPDF({ orientation: 'landscape' })
+  const doc = new jsPDF({ orientation: 'portrait' })
   const title = 'Export des compétitions'
   doc.setFontSize(14)
   doc.text(title, 14, 20)
 
-  const body = records.map((record) => [
-    getParticipantName(record),
-    record.type_participant,
-    getSportName(record),
-    record.nom_competition,
-    formatDate(record.date_heure),
-    formatTime(record.date_heure),
-    record.lieu,
-    record.etape,
-    record.statut,
-    record.resultat ?? '',
-    record.adversaire ?? ''
-  ])
+  const validRecords = records.filter((record) => record.date_heure)
 
-  autoTable(doc, {
-    startY: 26,
-    head: [[
-      'Participant',
-      'Type',
-      'Sport',
-      'Compétition',
-      'Date',
-      'Heure',
-      'Lieu',
-      'Étape',
-      'Statut',
-      'Résultat',
-      'Adversaire'
-    ]],
-    body,
-    styles: { fontSize: 8, cellPadding: 3 },
-    headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255] },
-    alternateRowStyles: { fillColor: [243, 244, 246] }
-  })
+  const groupedByDay = new Map<string, CompetitionRecord[]>()
+  for (const record of validRecords) {
+    const date = new Date(record.date_heure)
+    const dayKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+    if (!groupedByDay.has(dayKey)) {
+      groupedByDay.set(dayKey, [])
+    }
+    groupedByDay.get(dayKey)!.push(record)
+  }
+
+  const sortedDays = Array.from(groupedByDay.keys()).sort()
+  let currentY = 28
+
+  for (const day of sortedDays) {
+    const dayRecords = groupedByDay.get(day)!
+    dayRecords.sort((a, b) => {
+      const nameA = getParticipantName(a)
+      const nameB = getParticipantName(b)
+      if (nameA !== nameB) return nameA.localeCompare(nameB)
+      const sportA = getSportName(a)
+      const sportB = getSportName(b)
+      if (sportA !== sportB) return sportA.localeCompare(sportB)
+      return new Date(a.date_heure).getTime() - new Date(b.date_heure).getTime()
+    })
+
+    const [year, month, date] = day.split('-')
+    const dateObj = new Date(Number(year), Number(month) - 1, Number(date))
+    const dayLabel = dateObj.toLocaleDateString('fr-FR', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+
+    doc.setFontSize(11)
+    doc.setFont(undefined, 'bold')
+    doc.text(dayLabel.charAt(0).toUpperCase() + dayLabel.slice(1), 14, currentY)
+    currentY += 6
+
+    const body = dayRecords.map((record) => [
+      formatTime(record.date_heure),
+      getParticipantName(record),
+      getSportName(record),
+      record.nom_competition,
+      record.lieu,
+      record.etape,
+      record.statut,
+      record.resultat ?? '',
+      record.adversaire ?? ''
+    ])
+
+    autoTable(doc, {
+      startY: currentY,
+      head: [['Heure', 'Participant', 'Sport', 'Compétition', 'Lieu', 'Étape', 'Statut', 'Résultat', 'Adversaire']],
+      body,
+      styles: { fontSize: 7, cellPadding: 2 },
+      headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontSize: 8 },
+      alternateRowStyles: { fillColor: [243, 244, 246] },
+      margin: { left: 14, right: 14 }
+    })
+
+    currentY = doc.lastAutoTable.finalY + 10
+
+    if (currentY > 250) {
+      doc.addPage()
+      currentY = 20
+    }
+  }
 
   doc.save(`competitions-${new Date().toISOString().slice(0, 10)}.pdf`)
 }
